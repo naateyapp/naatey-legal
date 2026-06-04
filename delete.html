@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete My Data — Naatey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #FDF6F0;
+      color: #1A1A2E;
+      line-height: 1.7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #C0392B;
+      padding: 1.25rem 2rem;
+    }
+    .logo-text { font-size: 22px; font-weight: 600; color: #fff; }
+    .logo-sub { font-size: 13px; color: rgba(255,255,255,0.75); }
+    .container {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      flex: 1;
+    }
+    .icon-circle {
+      width: 72px;
+      height: 72px;
+      background: #FAECE7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #C0392B;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #7a6a60;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #E8E0D8;
+    }
+    .info-box {
+      background: #fff;
+      border: 1px solid #E8E0D8;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .info-box h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1A1A2E;
+      margin-bottom: 8px;
+    }
+    .info-box p, .info-box li {
+      font-size: 14px;
+      color: #5a4a3a;
+      line-height: 1.6;
+    }
+    .info-box ul {
+      margin-left: 1.25rem;
+      margin-top: 6px;
+    }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: #fff;
+      border: 1px solid #E8E0D8;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #C0392B;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text { font-size: 14px; color: #3a3a4a; line-height: 1.6; }
+    .step-text b { font-weight: 600; color: #1A1A2E; }
+    .email-btn {
+      display: block;
+      background: #C0392B;
+      color: #fff;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .note {
+      font-size: 13px;
+      color: #7a6a60;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .warning-box {
+      background: #FAEEDA;
+      border-left: 4px solid #E8623A;
+      border-radius: 0 10px 10px 0;
+      padding: 12px 16px;
+      margin-top: 1.5rem;
+    }
+    .warning-box p { font-size: 13px; color: #633806; }
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 13px;
+      color: #7a6a60;
+      border-top: 1px solid #E8E0D8;
+    }
+    footer a { color: #C0392B; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">Naatey</div>
+  <div class="logo-sub">Your Family & Friends Tree</div>
+</header>
+
+<div class="container">
+
+  <div class="icon-circle">🗑️</div>
+
+  <h1>Request Data Deletion</h1>
+  <p class="subtitle">You have the right to request deletion of your personal data from Naatey at any time.</p>
+
+  <div class="info-box">
+    <h3>What gets deleted</h3>
+    <ul>
+      <li>Your account and profile information</li>
+      <li>Your family tree and friendship connections</li>
+      <li>Your posts, recipes, and uploaded photos</li>
+      <li>Your matrimony profile (if created)</li>
+      <li>Your events, needs, and all activity data</li>
+    </ul>
+  </div>
+
+  <div class="info-box">
+    <h3>What we retain (required by law)</h3>
+    <ul>
+      <li>Transaction records if any purchases were made</li>
+      <li>Data required by Indian law or court order</li>
+      <li>Anonymised analytics data (not linked to you)</li>
+    </ul>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Click the button below to send us a deletion request email from your registered email address</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Include your <b>registered phone number</b> or <b>full name</b> in the email so we can identify your account</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">We will confirm your identity and process the deletion within <b>30 days</b> as per our Privacy Policy</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">You will receive a confirmation email once your data has been permanently deleted</div>
+    </div>
+  </div>
+
+  <a href="mailto:care@naatey.in?subject=Data%20Deletion%20Request&body=Hi%20Naatey%20Team%2C%0A%0AI%20would%20like%20to%20request%20permanent%20deletion%20of%20my%20account%20and%20all%20associated%20data.%0A%0ARegistered%20phone%20number%3A%20%0AFull%20name%3A%20%0A%0APlease%20confirm%20once%20the%20deletion%20is%20complete.%0A%0AThank%20you" class="email-btn">
+    📧 Send Deletion Request
+  </a>
+
+  <p class="note">
+    This will open your email app with a pre-filled deletion request.<br>
+    Send it from the email address linked to your Naatey account.
+  </p>
+
+  <div class="warning-box">
+    <p>⚠️ <strong>This action is permanent.</strong> Once your data is deleted, it cannot be recovered. Your family tree connections, recipes, and all content will be permanently removed.</p>
+  </div>
+
+</div>
+
+<footer>
+  &copy; 2026 Naatey. All rights reserved. &nbsp;·&nbsp;
+  <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp;
+  <a href="terms.html">Terms of Service</a> &nbsp;·&nbsp;
+  <a href="mailto:care@naatey.in">care@naatey.in</a>
+</footer>
+
+</body>
+</html>
