@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+<title>Naatey Family Tree</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #FDF6F0;
+    color: #1A1A2E;
+    overflow: hidden;
+    height: 100vh;
+    touch-action: pan-x pan-y;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #C0392B, #96281B);
+    color: white;
+    padding: 14px 16px;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+  .tab-bar {
+    display: flex;
+    position: fixed;
+    top: 54px;
+    left: 0;
+    right: 0;
+    background: white;
+    z-index: 99;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5A4A3A;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab.active { color: #C0392B; border-bottom-color: #C0392B; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Tree canvas area */
+  .tree-viewport {
+    position: fixed;
+    top: 94px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tree-canvas {
+    position: relative;
+    min-width: 900px;
+    min-height: 800px;
+    padding: 20px;
+  }
+
+  /* SVG connector layer */
+  .connectors {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .conn-parent-child {
+    stroke: #8B7355;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .conn-marriage {
+    stroke: #E91E63;
+    stroke-width: 2;
+    stroke-dasharray: 6,4;
+    fill: none;
+  }
+
+  .conn-sibling {
+    stroke: #27AE60;
+    stroke-width: 1.5;
+    stroke-dasharray: 4,3;
+    fill: none;
+  }
+
+  /* Person node */
+  .node {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.15s;
+  }
+
+  .node:active { transform: scale(0.93); }
+
+  .node-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    border: 3px solid white;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  }
+
+  .node-circle.male { background: #2980B9; }
+  .node-circle.female { background: #E91E63; }
+  .node-circle.you-m { 
+    background: #C0392B; 
+    width: 62px; height: 62px;
+    border: 3px solid #F5C842;
+    box-shadow: 0 0 0 4px rgba(245,200,66,0.3), 0 4px 14px rgba(0,0,0,0.25);
+    font-size: 13px;
+  }
+
+  .node-name {
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 3px;
+    max-width: 80px;
+    line-height: 1.2;
+    color: #1A1A2E;
+  }
+
+  .node-relation {
+    font-size: 9px;
+    color: #C0392B;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .node-location {
+    font-size: 8px;
+    color: #888;
+    text-align: center;
+  }
+
+  /* Marriage heart */
+  .heart-badge {
+    position: absolute;
+    font-size: 10px;
+    z-index: 15;
+    background: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  /* Generation labels */
+  .gen-label-floating {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 700;
+    color: #C0392B;
+    background: rgba(253,246,240,0.9);
+    padding: 2px 10px;
+    border-radius: 10px;
+    border: 1px solid #e0d0c0;
+    z-index: 5;
+    white-space: nowrap;
+  }
+
+  /* Zoom controls */
+  .controls {
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 50;
+  }
+
+  .ctrl-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #ddd;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .ctrl-btn:active { background: #f0f0f0; }
+
+  .fab {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #C0392B;
+    color: white;
+    font-size: 26px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(192,57,43,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Legend */
+  .tree-legend {
+    position: fixed;
+    bottom: 20px;
+    left: 16px;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    z-index: 50;
+    font-size: 9px;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .legend-row:last-child { margin-bottom: 0; }
+
+  .legend-line {
+    width: 20px;
+    height: 2px;
+    flex-shrink: 0;
+  }
+
+  .legend-circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1.5px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* Detail popup */
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .overlay.active { display: flex; }
+
+  .popup {
+    background: white;
+    border-radius: 20px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    animation: pop 0.25s ease;
+  }
+
+  @keyframes pop {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .popup-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 700; color: white;
+    margin: 0 auto 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  }
+
+  .popup-name { font-size: 20px; font-weight: 700; }
+  .popup-relation { font-size: 13px; color: #C0392B; font-weight: 600; margin: 4px 0 14px; }
+
+  .popup-row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #5A4A3A; padding: 6px 0;
+    border-bottom: 1px solid #f5f0eb;
+  }
+
+  .popup-row:last-of-type { border-bottom: none; }
+  .popup-icon { font-size: 16px; width: 24px; text-align: center; }
+
+  .popup-close {
+    margin-top: 18px;
+    padding: 10px 32px;
+    background: #C0392B;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Friends tab */
+  .friends-viewport {
+    position: fixed;
+    top: 94px; left: 0; right: 0; bottom: 0;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .f-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: white;
+    margin-bottom: 10px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+  }
+
+  .f-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+    background: #E8623A;
+    flex-shrink: 0;
+  }
+
+  .f-name { font-size: 15px; font-weight: 600; }
+  .f-sub { font-size: 12px; color: #5A4A3A; margin-top: 2px; }
+
+  .pinch-hint {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    z-index: 60;
+    opacity: 1;
+    transition: opacity 1s;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌳 Naatey Family Tree</h1>
+  <p>Pinch to zoom · Scroll to explore · Tap person for details</p>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('family')">🌳 Family Tree</div>
+  <div class="tab" onclick="switchTab('friends')">👥 Friends</div>
+</div>
+
+<div id="hint" class="pinch-hint">👆 Scroll to explore your tree</div>
+
+<!-- FAMILY TAB -->
+<div id="familyTab" class="tab-content active">
+  <div class="tree-viewport" id="viewport">
+    <div class="tree-canvas" id="canvas">
+      <svg class="connectors" id="svgLayer"></svg>
+      <!-- Nodes placed by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- FRIENDS TAB -->
+<div id="friendsTab" class="tab-content">
+  <div class="friends-viewport" id="friendsList"></div>
+</div>
+
+<!-- Legend -->
+<div class="tree-legend" id="legend">
+  <div class="legend-row"><div class="legend-circle" style="background:#2980B9"></div> Male</div>
+  <div class="legend-row"><div class="legend-circle" style="background:#E91E63"></div> Female</div>
+  <div class="legend-row"><div class="legend-line" style="background:#8B7355"></div> Parent–Child</div>
+  <div class="legend-row"><div class="legend-line" style="background:#E91E63;border-top:2px dashed #E91E63;height:0"></div> Marriage</div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="fab" onclick="addBond()">+</button>
+</div>
+
+<!-- Popup -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closePopup()">
+  <div class="popup">
+    <div class="popup-avatar" id="pAvatar"></div>
+    <div class="popup-name" id="pName"></div>
+    <div class="popup-relation" id="pRelation"></div>
+    <div id="pRows"></div>
+    <button class="popup-close" onclick="closePopup()">Close</button>
+  </div>
+</div>
+
+<script>
+// ========================================
+// FAMILY DATA - Replace with Firestore data
+// ========================================
+const tree = {
+  // Paternal Grandparents
+  dada:  { id:'dada',  name:'Hari Sharma',    rel:'Dada',   sub:'Paternal Grandfather', g:'m', loc:'Jaipur',    prof:'Retired Teacher', phone:'+919876543210' },
+  dadi:  { id:'dadi',  name:'Kamla Devi',     rel:'Dadi',   sub:'Paternal Grandmother', g:'f', loc:'Jaipur',    prof:'Homemaker',       phone:'+919876543211' },
+  // Maternal Grandparents
+  nana:  { id:'nana',  name:'Rajendra Prasad',rel:'Nana',   sub:'Maternal Grandfather', g:'m', loc:'Lucknow',   prof:'Retired Judge',   phone:'+919876543212' },
+  nani:  { id:'nani',  name:'Savitri Devi',   rel:'Nani',   sub:'Maternal Grandmother', g:'f', loc:'Lucknow',   prof:'Homemaker',       phone:'+919876543213' },
+  // Parents
+  papa:  { id:'papa',  name:'Ram Sharma',     rel:'Papa',   sub:'Father',               g:'m', loc:'Delhi',     prof:'Retired Banker',  phone:'+919876543214' },
+  ma:    { id:'ma',    name:'Sita Sharma',    rel:'Ma',     sub:'Mother',               g:'f', loc:'Delhi',     prof:'Teacher',         phone:'+919876543215' },
+  // Father's siblings
+  chacha:{ id:'chacha',name:'Suresh Sharma',  rel:'Chacha', sub:"Father's Yng Brother", g:'m', loc:'Jaipur',    prof:'Business Owner',  phone:'+919876543220' },
+  chachi:{ id:'chachi',name:'Kavita Sharma',  rel:'Chachi', sub:"Chacha's Wife",        g:'f', loc:'Jaipur',    prof:'Homemaker',       phone:'+919876543221' },
+  bua:   { id:'bua',   name:'Geeta Devi',     rel:'Bua',    sub:"Father's Sister",      g:'f', loc:'Chandigarh',prof:'Professor',       phone:'+919876543223' },
+  fufa:  { id:'fufa',  name:'Anil Kumar',     rel:'Fufa',   sub:"Bua's Husband",        g:'m', loc:'Chandigarh',prof:'Engineer',        phone:'+919876543226' },
+  // Mother's siblings
+  mama:  { id:'mama',  name:'Mohan Prasad',   rel:'Mama',   sub:"Mother's Brother",     g:'m', loc:'Lucknow',   prof:'Lawyer',          phone:'+919876543222' },
+  mami:  { id:'mami',  name:'Sunita Devi',    rel:'Mami',   sub:"Mama's Wife",          g:'f', loc:'Lucknow',   prof:'Doctor',          phone:'+919876543227' },
+  // YOU
+  you:   { id:'you',   name:'You',            rel:'',       sub:'',                     g:'m', loc:'Bangalore', prof:'Entrepreneur',    phone:'' },
+  // Spouse
+  wife:  { id:'wife',  name:'Anjali Sharma',  rel:'Patni',  sub:'Wife',                 g:'f', loc:'Bangalore', prof:'Architect',       phone:'+919876543219' },
+  // Siblings
+  bhaiya:{ id:'bhaiya',name:'Vikram Sharma',  rel:'Bhaiya', sub:'Elder Brother',        g:'m', loc:'Bangalore', prof:'VP, Google',      phone:'+919876543216' },
+  bhabhi:{ id:'bhabhi',name:'Neha Sharma',    rel:'Bhabhi', sub:"Bhaiya's Wife",        g:'f', loc:'Bangalore', prof:'Designer',        phone:'+919876543225' },
+  didi:  { id:'didi',  name:'Priya Sharma',   rel:'Didi',   sub:'Elder Sister',         g:'f', loc:'Mumbai',    prof:'Doctor',          phone:'+919876543217' },
+  jija:  { id:'jija',  name:'Deepak Mehta',   rel:'Jija',   sub:"Didi's Husband",       g:'m', loc:'Mumbai',    prof:'CA',              phone:'+919876543224' },
+  bhai:  { id:'bhai',  name:'Rahul Sharma',   rel:'Bhai',   sub:'Younger Brother',      g:'m', loc:'Pune',      prof:'Student',         phone:'+919876543218' },
+  // Children
+  beta:  { id:'beta',  name:'Arjun Jr',       rel:'Beta',   sub:'Son',                  g:'m', loc:'Bangalore', prof:'Student, Class 8',phone:'' },
+  beti:  { id:'beti',  name:'Meera',          rel:'Beti',   sub:'Daughter',             g:'f', loc:'Bangalore', prof:'Student, Class 5',phone:'' },
+};
+
+const friends = [
+  { name:'Amit Kumar',    prof:'Startup Founder',  loc:'Delhi',     phone:'+919876543230', rel:'Friend', g:'m' },
+  { name:'Sneha Patel',   prof:'Marketing Head',   loc:'Mumbai',    phone:'+919876543231', rel:'Friend', g:'f' },
+  { name:'Dr. Rajesh Iyer',prof:'Cardiologist',    loc:'Chennai',   phone:'+919876543232', rel:'Mentor', g:'m' },
+  { name:'Pooja Gupta',   prof:'Lawyer',           loc:'Bangalore', phone:'+919876543233', rel:'Friend', g:'f' },
+];
+
+// ========================================
+// TREE LAYOUT - Position each node
+// ========================================
+// Format: [id, x, y]
+// x = horizontal position, y = vertical level
+// Canvas: ~900px wide, generations at y intervals
+
+const LEVEL_H = 130; // vertical gap between generations
+const NODE_W  = 80;  // horizontal gap between nodes
+const START_Y = 30;
+
+// Level 0: Grandparents (y=0)
+// Level 1: Parents + their siblings (y=1)  
+// Level 2: YOU + your siblings (y=2)
+// Level 3: Children (y=3)
+
+const positions = {
+  // --- Grandparents ---
+  dada:   { x: 200, y: START_Y },
+  dadi:   { x: 290, y: START_Y },
+  nana:   { x: 560, y: START_Y },
+  nani:   { x: 650, y: START_Y },
+
+  // --- Parents & their siblings ---
+  bua:    { x: 60,  y: START_Y + LEVEL_H },
+  fufa:   { x: 140, y: START_Y + LEVEL_H },
+  papa:   { x: 240, y: START_Y + LEVEL_H },
+  ma:     { x: 330, y: START_Y + LEVEL_H },
+  chacha: { x: 420, y: START_Y + LEVEL_H },
+  chachi: { x: 500, y: START_Y + LEVEL_H },
+  mama:   { x: 600, y: START_Y + LEVEL_H },
+  mami:   { x: 680, y: START_Y + LEVEL_H },
+
+  // --- YOU + siblings ---
+  didi:   { x: 60,  y: START_Y + LEVEL_H * 2 },
+  jija:   { x: 140, y: START_Y + LEVEL_H * 2 },
+  bhaiya: { x: 230, y: START_Y + LEVEL_H * 2 },
+  bhabhi: { x: 310, y: START_Y + LEVEL_H * 2 },
+  you:    { x: 420, y: START_Y + LEVEL_H * 2 },
+  wife:   { x: 510, y: START_Y + LEVEL_H * 2 },
+  bhai:   { x: 620, y: START_Y + LEVEL_H * 2 },
+
+  // --- Children ---
+  beta:   { x: 400, y: START_Y + LEVEL_H * 3 },
+  beti:   { x: 500, y: START_Y + LEVEL_H * 3 },
+};
+
+// Marriages (draw heart connectors)
+const marriages = [
+  ['dada','dadi'], ['nana','nani'],
+  ['papa','ma'], ['chacha','chachi'], ['bua','fufa'], ['mama','mami'],
+  ['you','wife'], ['bhaiya','bhabhi'], ['didi','jija'],
+];
+
+// Parent-child connections
+const parentChild = [
+  // Grandparents → Parents
+  { parents:['dada','dadi'], child:'papa' },
+  { parents:['dada','dadi'], child:'chacha' },
+  { parents:['dada','dadi'], child:'bua' },
+  { parents:['nana','nani'], child:'ma' },
+  { parents:['nana','nani'], child:'mama' },
+  // Parents → You & siblings
+  { parents:['papa','ma'], child:'bhaiya' },
+  { parents:['papa','ma'], child:'didi' },
+  { parents:['papa','ma'], child:'you' },
+  { parents:['papa','ma'], child:'bhai' },
+  // You → Children
+  { parents:['you','wife'], child:'beta' },
+  { parents:['you','wife'], child:'beti' },
+];
+
+// ========================================
+// RENDER
+// ========================================
+function getInitials(n) { return n.split(' ').map(w=>w[0]).join('').substring(0,2); }
+
+function cx(id) { return positions[id].x + 26; } // center x of node
+function cy(id) { return positions[id].y + 26; } // center y of node
+
+function render() {
+  const canvas = document.getElementById('canvas');
+  const svg = document.getElementById('svgLayer');
+  
+  // Set canvas size
+  let maxX = 0, maxY = 0;
+  Object.values(positions).forEach(p => {
+    if (p.x + 100 > maxX) maxX = p.x + 100;
+    if (p.y + 120 > maxY) maxY = p.y + 120;
+  });
+  canvas.style.width = maxX + 'px';
+  canvas.style.height = maxY + 'px';
+  svg.setAttribute('width', maxX);
+  svg.setAttribute('height', maxY);
+
+  let svgContent = '';
+
+  // Draw parent-child connectors
+  parentChild.forEach(pc => {
+    const p1 = positions[pc.parents[0]];
+    const p2 = positions[pc.parents[1]];
+    const c = positions[pc.child];
+    if (!p1 || !p2 || !c) return;
+
+    // Middle point between parents
+    const midX = (cx(pc.parents[0]) + cx(pc.parents[1])) / 2;
+    const parentBot = Math.max(cy(pc.parents[0]), cy(pc.parents[1])) + 30;
+    const childTop = c.y - 4;
+    const childCx = cx(pc.child);
+
+    // Vertical line from parents down, then horizontal, then down to child
+    const midY = parentBot + (childTop - parentBot) / 2;
+
+    svgContent += `<path class="conn-parent-child" d="M${midX},${parentBot} L${midX},${midY} L${childCx},${midY} L${childCx},${childTop}"/>`;
+  });
+
+  // Draw marriage connectors
+  marriages.forEach(([id1, id2]) => {
+    const p1 = positions[id1];
+    const p2 = positions[id2];
+    if (!p1 || !p2) return;
+
+    const y = Math.min(cy(id1), cy(id2));
+    svgContent += `<line class="conn-marriage" x1="${cx(id1)+26}" y1="${y}" x2="${cx(id2)-26}" y2="${y}"/>`;
+  });
+
+  svg.innerHTML = svgContent;
+
+  // Draw generation labels
+  const labels = [
+    { text: '👴👵 Grandparents', x: 10, y: START_Y - 5 },
+    { text: '👨‍👩‍👦 Parents & Relatives', x: 10, y: START_Y + LEVEL_H - 5 },
+    { text: '⭐ You & Siblings', x: 10, y: START_Y + LEVEL_H * 2 - 5 },
+    { text: '👶 Children', x: 10, y: START_Y + LEVEL_H * 3 - 5 },
+  ];
+
+  labels.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'gen-label-floating';
+    div.textContent = l.text;
+    div.style.left = l.x + 'px';
+    div.style.top = l.y + 'px';
+    canvas.appendChild(div);
+  });
+
+  // Draw marriage hearts
+  marriages.forEach(([id1, id2]) => {
+    const p1 = positions[id1];
+    const p2 = positions[id2];
+    if (!p1 || !p2) return;
+
+    const hx = (p1.x + p2.x) / 2 + 20;
+    const hy = Math.min(p1.y, p2.y) + 18;
+    const heart = document.createElement('div');
+    heart.className = 'heart-badge';
+    heart.textContent = '♥';
+    heart.style.left = hx + 'px';
+    heart.style.top = hy + 'px';
+    canvas.appendChild(heart);
+  });
+
+  // Draw person nodes
+  Object.entries(tree).forEach(([id, person]) => {
+    const pos = positions[id];
+    if (!pos) return;
+
+    const node = document.createElement('div');
+    node.className = 'node';
+    node.style.left = pos.x + 'px';
+    node.style.top = pos.y + 'px';
+    node.onclick = () => showPopup(person);
+
+    const isYou = id === 'you';
+    const circleClass = isYou ? 'you-m' : (person.g === 'm' ? 'male' : 'female');
+
+    node.innerHTML = `
+      <div class="node-circle ${circleClass}">${isYou ? '★ YOU' : getInitials(person.name)}</div>
+      <div class="node-name">${person.name}</div>
+      <div class="node-relation">${person.rel}</div>
+      <div class="node-location">${person.loc ? '📍' + person.loc : ''}</div>
+    `;
+
+    canvas.appendChild(node);
+  });
+}
+
+// ========================================
+// FRIENDS
+// ========================================
+function renderFriends() {
+  const container = document.getElementById('friendsList');
+  container.innerHTML = '';
+  friends.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'f-card';
+    card.onclick = () => showPopup(f);
+    card.innerHTML = `
+      <div class="f-avatar" style="background:${f.g==='f'?'#E91E63':'#E8623A'}">${getInitials(f.name)}</div>
+      <div>
+        <div class="f-name">${f.name}</div>
+        <div class="f-sub">${f.rel === 'Mentor' ? '🎓' : '🤝'} ${f.rel} · ${f.prof}</div>
+        <div class="f-sub">📍 ${f.loc}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ========================================
+// POPUP
+// ========================================
+function showPopup(p) {
+  document.getElementById('pAvatar').style.background = p.g === 'f' ? '#E91E63' : '#2980B9';
+  document.getElementById('pAvatar').textContent = getInitials(p.name);
+  document.getElementById('pName').textContent = p.name;
+  document.getElementById('pRelation').textContent = p.sub || p.rel;
+
+  let rows = '';
+  if (p.prof) rows += `<div class="popup-row"><span class="popup-icon">💼</span>${p.prof}</div>`;
+  if (p.loc)  rows += `<div class="popup-row"><span class="popup-icon">📍</span>${p.loc}</div>`;
+  if (p.phone) rows += `<div class="popup-row"><span class="popup-icon">📞</span>${p.phone}</div>`;
+  document.getElementById('pRows').innerHTML = rows;
+
+  document.getElementById('overlay').classList.add('active');
+}
+
+function closePopup() {
+  document.getElementById('overlay').classList.remove('active');
+}
+
+// ========================================
+// TABS
+// ========================================
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  const legend = document.getElementById('legend');
+
+  if (t === 'family') {
+    document.querySelector('.tab:first-child').classList.add('active');
+    document.getElementById('familyTab').classList.add('active');
+    legend.style.display = 'block';
+  } else {
+    document.querySelector('.tab:last-child').classList.add('active');
+    document.getElementById('friendsTab').classList.add('active');
+    legend.style.display = 'none';
+  }
+}
+
+function addBond() {
+  alert('Navigate to Add Bond page');
+}
+
+// ========================================
+// INIT
+// ========================================
+render();
+renderFriends();
+
+// Hide hint after 3 seconds
+setTimeout(() => {
+  document.getElementById('hint').style.opacity = '0';
+  setTimeout(() => document.getElementById('hint').style.display = 'none', 1000);
+}, 3000);
+</script>
+
+</body>
+</html>
