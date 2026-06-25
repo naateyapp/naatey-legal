@@ -6,90 +6,55 @@
 <title>Naatey Family Tree</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #FDF6F0;
-    color: #1A1A2E;
-    overflow: hidden;
-    height: 100vh;
-    touch-action: pan-x pan-y;
+    background: #FDF6F0; color: #1A1A2E;
+    overflow: hidden; height: 100vh; touch-action: pan-x pan-y;
   }
-
   .header {
     background: linear-gradient(135deg, #C0392B, #96281B);
-    color: white;
-    padding: 12px 16px;
-    text-align: center;
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
+    color: white; padding: 12px 16px; text-align: center;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     box-shadow: 0 2px 12px rgba(0,0,0,0.2);
   }
   .header h1 { font-size: 17px; font-weight: 700; }
-  .header p  { font-size: 10px; opacity: 0.8; margin-top: 2px; }
-
+  .header p { font-size: 10px; opacity: 0.8; margin-top: 2px; }
   .tree-viewport {
-    position: fixed;
-    top: 52px; left: 0; right: 0; bottom: 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    background: #FDF6F0;
+    position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+    overflow: auto; -webkit-overflow-scrolling: touch; background: #FDF6F0;
   }
-
   .tree-canvas {
-    position: relative;
-    min-width: 800px;
-    min-height: 600px;
+    position: relative; min-width: 800px; min-height: 600px;
     padding: 30px 20px 80px 20px;
   }
-
   .connectors {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 1;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 1;
   }
   .conn-pc { stroke: #8B7355; stroke-width: 2; fill: none; }
   .conn-mar { stroke: #E91E63; stroke-width: 2; stroke-dasharray: 6,4; fill: none; }
-
   .node {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    z-index: 10;
-    width: 90px;
-    transition: transform 0.15s;
+    position: absolute; display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; z-index: 10; width: 90px; transition: transform 0.15s;
   }
   .node:active { transform: scale(0.93); }
-
   .node-circle {
-    width: 54px; height: 54px;
-    border-radius: 50%;
+    width: 54px; height: 54px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 15px; font-weight: 700; color: white;
-    border: 3px solid white;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-    flex-shrink: 0;
+    border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.2); flex-shrink: 0;
   }
-  .node-circle.male   { background: #2980B9; }
+  .node-circle.male { background: #2980B9; }
   .node-circle.female { background: #E91E63; }
   .node-circle.you-node {
-    background: #C0392B;
-    width: 64px; height: 64px;
+    background: #C0392B; width: 64px; height: 64px;
     border: 3px solid #F5C842;
     box-shadow: 0 0 0 4px rgba(245,200,66,0.3), 0 4px 14px rgba(0,0,0,0.25);
     font-size: 12px;
   }
-
   .node-name {
-    font-size: 10px; font-weight: 700;
-    text-align: center; margin-top: 4px;
-    width: 88px; line-height: 1.25;
-    color: #1A1A2E;
+    font-size: 10px; font-weight: 700; text-align: center; margin-top: 4px;
+    width: 88px; line-height: 1.25; color: #1A1A2E;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .node-relation {
@@ -98,52 +63,35 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .node-location {
-    font-size: 8px; color: #999;
-    text-align: center; width: 88px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-top: 1px;
+    font-size: 8px; color: #999; text-align: center; width: 88px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
   }
-
   .heart-badge {
-    position: absolute;
-    font-size: 10px; z-index: 15;
-    background: white; border-radius: 50%;
-    width: 18px; height: 18px;
+    position: absolute; font-size: 10px; z-index: 15;
+    background: white; border-radius: 50%; width: 18px; height: 18px;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    color: #E91E63;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15); color: #E91E63;
   }
-
   .gen-stripe {
-    position: absolute;
-    left: 0; right: 0;
-    height: 22px;
+    position: absolute; left: 0; right: 0; height: 22px;
     background: linear-gradient(90deg, rgba(192,57,43,0.08), transparent 60%);
     border-left: 3px solid #C0392B;
-    display: flex; align-items: center;
-    padding-left: 10px;
-    z-index: 2;
+    display: flex; align-items: center; padding-left: 10px; z-index: 2;
   }
   .gen-stripe span {
-    font-size: 10px; font-weight: 700;
-    color: #C0392B;
-    background: rgba(253,246,240,0.95);
-    padding: 1px 8px; border-radius: 8px;
+    font-size: 10px; font-weight: 700; color: #C0392B;
+    background: rgba(253,246,240,0.95); padding: 1px 8px; border-radius: 8px;
     white-space: nowrap;
   }
-
   .tree-legend {
     position: fixed; bottom: 16px; left: 12px;
-    background: white; border-radius: 12px;
-    padding: 8px 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-    z-index: 50; font-size: 9px;
+    background: white; border-radius: 12px; padding: 8px 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1); z-index: 50; font-size: 9px;
   }
   .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
   .legend-row:last-child { margin-bottom: 0; }
   .legend-circle { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
   .legend-line { width: 20px; height: 2px; flex-shrink: 0; }
-
   .controls {
     position: fixed; bottom: 20px; right: 16px;
     display: flex; flex-direction: column; gap: 8px; z-index: 50;
@@ -155,33 +103,25 @@
     box-shadow: 0 4px 16px rgba(192,57,43,0.4);
     display: flex; align-items: center; justify-content: center;
   }
-
   .overlay {
-    display: none; position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.5); z-index: 200;
     align-items: center; justify-content: center; padding: 20px;
   }
   .overlay.active { display: flex; }
   .popup {
-    background: white; border-radius: 20px;
-    padding: 28px 24px; width: 100%; max-width: 300px;
-    text-align: center;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
-    animation: pop 0.25s ease;
+    background: white; border-radius: 20px; padding: 28px 24px;
+    width: 100%; max-width: 300px; text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35); animation: pop 0.25s ease;
   }
-  @keyframes pop {
-    from { transform: scale(0.85); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
-  }
+  @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .popup-avatar {
     width: 72px; height: 72px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 26px; font-weight: 700; color: white;
-    margin: 0 auto 10px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    margin: 0 auto 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
   }
-  .popup-name     { font-size: 20px; font-weight: 700; }
+  .popup-name { font-size: 20px; font-weight: 700; }
   .popup-relation { font-size: 13px; color: #C0392B; font-weight: 600; margin: 4px 0 14px; }
   .popup-row {
     display: flex; align-items: center; gap: 10px;
@@ -195,29 +135,22 @@
     background: #C0392B; color: white; border: none;
     border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
   }
-
   .loading-screen {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: #FDF6F0; z-index: 500;
-    transition: opacity 0.4s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #FDF6F0; z-index: 500; transition: opacity 0.4s;
   }
   .loading-screen.hidden { opacity: 0; pointer-events: none; }
   .spinner {
-    width: 40px; height: 40px;
-    border: 4px solid #f0e0d0;
-    border-top-color: #C0392B;
-    border-radius: 50%;
+    width: 40px; height: 40px; border: 4px solid #f0e0d0;
+    border-top-color: #C0392B; border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-screen p { margin-top: 14px; color: #5A4A3A; font-size: 14px; }
-
   .empty-state {
     position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 40px; text-align: center;
   }
   .empty-state .emoji { font-size: 60px; margin-bottom: 16px; }
@@ -225,53 +158,40 @@
   .empty-state p { font-size: 14px; color: #5A4A3A; margin-bottom: 20px; line-height: 1.5; }
   .empty-state button {
     padding: 12px 28px; background: #C0392B; color: white;
-    border: none; border-radius: 12px; font-size: 15px;
-    font-weight: 600; cursor: pointer;
-    box-shadow: 0 4px 12px rgba(192,57,43,0.3);
+    border: none; border-radius: 12px; font-size: 15px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(192,57,43,0.3);
   }
-
   .pinch-hint {
-    position: fixed; top: 58px; left: 50%;
-    transform: translateX(-50%);
+    position: fixed; top: 58px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.7); color: white;
-    padding: 6px 16px; border-radius: 20px;
-    font-size: 11px; z-index: 60;
-    transition: opacity 1s; pointer-events: none;
+    padding: 6px 16px; border-radius: 20px; font-size: 11px;
+    z-index: 60; transition: opacity 1s; pointer-events: none;
   }
 </style>
 </head>
 <body>
-
 <div class="header">
   <h1>🌳 My Family Tree</h1>
   <p>Scroll to explore · Tap a person for details</p>
 </div>
-
 <div id="hint" class="pinch-hint">👆 Scroll to explore your tree</div>
-
 <div class="loading-screen" id="loader">
   <div class="spinner"></div>
   <p>Loading your family tree...</p>
 </div>
-
 <div class="tree-viewport" id="viewport">
   <div class="tree-canvas" id="canvas">
     <svg class="connectors" id="svgLayer"></svg>
   </div>
 </div>
-
 <div class="tree-legend" id="legend">
   <div class="legend-row"><div class="legend-circle" style="background:#2980B9"></div> Male</div>
   <div class="legend-row"><div class="legend-circle" style="background:#E91E63"></div> Female</div>
   <div class="legend-row"><div class="legend-circle" style="background:#C0392B;border-color:#F5C842"></div> You</div>
-  <div class="legend-row"><div class="legend-line" style="background:#8B7355"></div> Parent–Child</div>
+  <div class="legend-row"><div class="legend-line" style="background:#8B7355"></div> Parent-Child</div>
   <div class="legend-row"><div class="legend-line" style="background:#E91E63;height:0;border-top:2px dashed #E91E63"></div> Marriage</div>
 </div>
-
-<div class="controls">
-  <button class="fab" onclick="addBond()">+</button>
-</div>
-
+<div class="controls"><button class="fab" onclick="addBond()">+</button></div>
 <div class="overlay" id="overlay" onclick="if(event.target===this)closePopup()">
   <div class="popup">
     <div class="popup-avatar" id="pAvatar"></div>
@@ -281,15 +201,9 @@
     <button class="popup-close" onclick="closePopup()">Close</button>
   </div>
 </div>
-
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
 <script>
-// ============================================================
-// FIREBASE INIT
-// ============================================================
 firebase.initializeApp({
   apiKey: "AIzaSyAxCOkxSmZZtSQRQT-gKnIBbvgGvK74d6M",
   authDomain: "naatey-network-r926ie.firebaseapp.com",
@@ -301,406 +215,314 @@ firebase.initializeApp({
 var db = firebase.firestore();
 
 // ============================================================
-// RELATIONSHIP CLASSIFICATION
+// EXACT FIRESTORE FIELD NAMES (from your schema)
+// relativename (lowercase n), relationship, relativePhone,
+// profession, location, userId, createdAt, generation
 // ============================================================
+
 function classify(rel) {
   if (!rel) return { gen: 2, g: 'u' };
   var r = rel.toLowerCase();
-
-  // Gen 0: Grandparents
-  if (r.indexOf('dada') >= 0 || (r.indexOf('grandfather') >= 0 && r.indexOf('paternal') >= 0)) return { gen:0, g:'m' };
-  if (r.indexOf('dadi') >= 0 || (r.indexOf('grandmother') >= 0 && r.indexOf('paternal') >= 0)) return { gen:0, g:'f' };
-  if (r.indexOf('nana') >= 0 || (r.indexOf('grandfather') >= 0 && r.indexOf('maternal') >= 0)) return { gen:0, g:'m' };
-  if (r.indexOf('nani') >= 0 || (r.indexOf('grandmother') >= 0 && r.indexOf('maternal') >= 0)) return { gen:0, g:'f' };
-  if (r.indexOf('grandfather') >= 0 || r.indexOf('grandpa') >= 0) return { gen:0, g:'m' };
-  if (r.indexOf('grandmother') >= 0 || r.indexOf('grandma') >= 0) return { gen:0, g:'f' };
-
-  // Gen 1: Parents & their generation
-  if (r.indexOf('papa') >= 0 || r === 'father' || (r.indexOf('father') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return { gen:1, g:'m' };
-  if (r.indexOf('ma/') >= 0 || r === 'mother' || (r.indexOf('mother') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return { gen:1, g:'f' };
-  if (r.indexOf('tau') >= 0 && r.indexOf('nati') < 0) return { gen:1, g:'m' };
-  if (r.indexOf('tai') >= 0 && r.indexOf('nati') < 0) return { gen:1, g:'f' };
-  if (r.indexOf('chacha') >= 0) return { gen:1, g:'m' };
-  if (r.indexOf('chachi') >= 0) return { gen:1, g:'f' };
-  if (r.indexOf('bua') >= 0) return { gen:1, g:'f' };
-  if (r.indexOf('fufa') >= 0) return { gen:1, g:'m' };
-  if (r.indexOf('mama') >= 0 && r.indexOf('grand') < 0) return { gen:1, g:'m' };
-  if (r.indexOf('mami') >= 0) return { gen:1, g:'f' };
-  if (r.indexOf('mausi') >= 0 || r.indexOf('maasi') >= 0) return { gen:1, g:'f' };
-  if (r.indexOf('mausa') >= 0) return { gen:1, g:'m' };
-  if (r === 'uncle') return { gen:1, g:'m' };
-  if (r === 'aunt') return { gen:1, g:'f' };
-
-  // Gen 2: You, Siblings, In-laws
-  if (r.indexOf('bhaiya') >= 0 || r.indexOf('elder brother') >= 0) return { gen:2, g:'m' };
-  if (r.indexOf('bhabhi') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('didi') >= 0 || r.indexOf('elder sister') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('jija') >= 0) return { gen:2, g:'m' };
-  if (r.indexOf('bhai') >= 0 && r.indexOf('sahab') < 0) return { gen:2, g:'m' };
-  if (r.indexOf('behen') >= 0 || r.indexOf('younger sister') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('spouse') >= 0 || r.indexOf('patni') >= 0 || r.indexOf('wife') >= 0 || r.indexOf('pati') >= 0 || r.indexOf('husband') >= 0) return { gen:2, g:'u' };
-  if (r.indexOf('brother') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0) return { gen:2, g:'m' };
-  if (r.indexOf('sister') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0) return { gen:2, g:'f' };
-  if (r.indexOf('cousin') >= 0) return { gen:2, g:'u' };
-  if (r.indexOf('jeth') >= 0 && r.indexOf('jethani') < 0) return { gen:2, g:'m' };
-  if (r.indexOf('jethani') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('dewar') >= 0 && r.indexOf('devrani') < 0) return { gen:2, g:'m' };
-  if (r.indexOf('devrani') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('nanand') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('nandoi') >= 0) return { gen:2, g:'m' };
-  if (r.indexOf('saali') >= 0) return { gen:2, g:'f' };
-  if (r.indexOf('sadhu') >= 0) return { gen:2, g:'m' };
-  if (r.indexOf('saala') >= 0) return { gen:2, g:'m' };
-  if (r.indexOf('sahab') >= 0) return { gen:2, g:'m' };
-
-  // Gen 3: Children
-  if (r.indexOf('beta') >= 0 || (r.indexOf('son') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return { gen:3, g:'m' };
-  if (r.indexOf('bahu') >= 0 || r.indexOf('daughter-in-law') >= 0 || r.indexOf('daughter in law') >= 0) return { gen:3, g:'f' };
-  if (r.indexOf('beti') >= 0 || (r.indexOf('daughter') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return { gen:3, g:'f' };
-  if (r.indexOf('damaad') >= 0 || r.indexOf('son-in-law') >= 0 || r.indexOf('son in law') >= 0) return { gen:3, g:'m' };
-
-  // Gen 4: Grandchildren
-  if (r.indexOf('pota') >= 0) return { gen:4, g:'m' };
-  if (r.indexOf('poti') >= 0) return { gen:4, g:'f' };
-  if (r.indexOf('nati') >= 0 && r.indexOf('natin') < 0) return { gen:4, g:'m' };
-  if (r.indexOf('natin') >= 0) return { gen:4, g:'f' };
-  if (r.indexOf('grandson') >= 0) return { gen:4, g:'m' };
-  if (r.indexOf('granddaughter') >= 0) return { gen:4, g:'f' };
-
-  // Friend/Mentor — skip in tree (gen 99)
-  if (r.indexOf('friend') >= 0 || r.indexOf('mentor') >= 0) return { gen:99, g:'u' };
-
-  return { gen:2, g:'u' };
+  if (r.indexOf('dada') >= 0 || (r.indexOf('grand') >= 0 && r.indexOf('father') >= 0 && r.indexOf('paternal') >= 0)) return {gen:0,g:'m'};
+  if (r.indexOf('dadi') >= 0 || (r.indexOf('grand') >= 0 && r.indexOf('mother') >= 0 && r.indexOf('paternal') >= 0)) return {gen:0,g:'f'};
+  if (r.indexOf('nana') >= 0 || (r.indexOf('grand') >= 0 && r.indexOf('father') >= 0 && r.indexOf('maternal') >= 0)) return {gen:0,g:'m'};
+  if (r.indexOf('nani') >= 0 || (r.indexOf('grand') >= 0 && r.indexOf('mother') >= 0 && r.indexOf('maternal') >= 0)) return {gen:0,g:'f'};
+  if (r.indexOf('grandfather') >= 0) return {gen:0,g:'m'};
+  if (r.indexOf('grandmother') >= 0) return {gen:0,g:'f'};
+  if (r.indexOf('papa') >= 0 || r === 'father' || (r.indexOf('father') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return {gen:1,g:'m'};
+  if (r.indexOf('mother') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0) return {gen:1,g:'f'};
+  if (r.indexOf('ma/') >= 0 || r === 'ma' || r === 'mother') return {gen:1,g:'f'};
+  if (r.indexOf('tau') >= 0 && r.indexOf('nati') < 0 && r.indexOf('tai') < 0) return {gen:1,g:'m'};
+  if (r.indexOf('tai') >= 0 && r.indexOf('nati') < 0) return {gen:1,g:'f'};
+  if (r.indexOf('chacha') >= 0) return {gen:1,g:'m'};
+  if (r.indexOf('chachi') >= 0) return {gen:1,g:'f'};
+  if (r.indexOf('bua') >= 0) return {gen:1,g:'f'};
+  if (r.indexOf('fufa') >= 0) return {gen:1,g:'m'};
+  if (r.indexOf('mama') >= 0 && r.indexOf('grand') < 0) return {gen:1,g:'m'};
+  if (r.indexOf('mami') >= 0) return {gen:1,g:'f'};
+  if (r.indexOf('mausi') >= 0 || r.indexOf('maasi') >= 0) return {gen:1,g:'f'};
+  if (r.indexOf('mausa') >= 0) return {gen:1,g:'m'};
+  if (r === 'uncle') return {gen:1,g:'m'};
+  if (r === 'aunt') return {gen:1,g:'f'};
+  if (r.indexOf('bhaiya') >= 0 || r.indexOf('elder brother') >= 0) return {gen:2,g:'m'};
+  if (r.indexOf('bhabhi') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('didi') >= 0 || r.indexOf('elder sister') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('jija') >= 0) return {gen:2,g:'m'};
+  if (r.indexOf('bhai') >= 0 && r.indexOf('sahab') < 0 && r.indexOf('bhaiya') < 0) return {gen:2,g:'m'};
+  if (r.indexOf('behen') >= 0 || r.indexOf('younger sister') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('spouse') >= 0 || r.indexOf('patni') >= 0 || r.indexOf('wife') >= 0 || r.indexOf('pati') >= 0 || r.indexOf('husband') >= 0) return {gen:2,g:'u'};
+  if (r.indexOf('brother') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0) return {gen:2,g:'m'};
+  if (r.indexOf('sister') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0) return {gen:2,g:'f'};
+  if (r.indexOf('cousin') >= 0) return {gen:2,g:'u'};
+  if (r.indexOf('jeth') >= 0 && r.indexOf('jethani') < 0) return {gen:2,g:'m'};
+  if (r.indexOf('jethani') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('dewar') >= 0 && r.indexOf('devrani') < 0) return {gen:2,g:'m'};
+  if (r.indexOf('devrani') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('nanand') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('nandoi') >= 0) return {gen:2,g:'m'};
+  if (r.indexOf('saali') >= 0) return {gen:2,g:'f'};
+  if (r.indexOf('sadhu') >= 0) return {gen:2,g:'m'};
+  if (r.indexOf('saala') >= 0) return {gen:2,g:'m'};
+  if (r.indexOf('sahab') >= 0) return {gen:2,g:'m'};
+  if (r.indexOf('beta') >= 0 || (r.indexOf('son') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return {gen:3,g:'m'};
+  if (r.indexOf('bahu') >= 0 || r.indexOf('daughter-in-law') >= 0 || r.indexOf('daughter in law') >= 0) return {gen:3,g:'f'};
+  if (r.indexOf('beti') >= 0 || (r.indexOf('daughter') >= 0 && r.indexOf('grand') < 0 && r.indexOf('in-law') < 0 && r.indexOf('in law') < 0)) return {gen:3,g:'f'};
+  if (r.indexOf('damaad') >= 0 || r.indexOf('son-in-law') >= 0 || r.indexOf('son in law') >= 0) return {gen:3,g:'m'};
+  if (r.indexOf('pota') >= 0) return {gen:4,g:'m'};
+  if (r.indexOf('poti') >= 0) return {gen:4,g:'f'};
+  if (r.indexOf('nati') >= 0 && r.indexOf('natin') < 0) return {gen:4,g:'m'};
+  if (r.indexOf('natin') >= 0) return {gen:4,g:'f'};
+  if (r.indexOf('grandson') >= 0) return {gen:4,g:'m'};
+  if (r.indexOf('granddaughter') >= 0) return {gen:4,g:'f'};
+  if (r.indexOf('friend') >= 0 || r.indexOf('mentor') >= 0) return {gen:99,g:'u'};
+  return {gen:2,g:'u'};
 }
 
-// Guess gender from name if classification returns 'u'
 function guessGender(name) {
   if (!name) return 'm';
   var n = name.toLowerCase();
-  var femaleHints = ['devi','kumari','bai','amma','priya','anjali','sita','geeta','kavita','sunita','neha','meera','pooja','sneha','nisha'];
-  for (var i = 0; i < femaleHints.length; i++) {
-    if (n.indexOf(femaleHints[i]) >= 0) return 'f';
-  }
-  var femaleEndings = ['a','i','ee','ni','ti','li','ri','hi','vi','ya','ka','na'];
-  var parts = n.split(' ');
-  var first = parts[0];
-  for (var j = 0; j < femaleEndings.length; j++) {
-    if (first.length > 3 && first.endsWith(femaleEndings[j])) return 'f';
-  }
+  var fh = ['devi','kumari','bai','amma','priya','anjali','sita','geeta','kavita','sunita','neha','meera','pooja','sneha','nisha','prabha','rekha','lata','seema','anita','shanti','pushpa','savitri','lakshmi','radha'];
+  for (var i=0;i<fh.length;i++) { if (n.indexOf(fh[i])>=0) return 'f'; }
   return 'm';
 }
 
-// Known couple pairs for matching
 var COUPLES = {
   'dada':'dadi','dadi':'dada','nana':'nani','nani':'nana',
-  'papa':'ma','ma':'papa','father':'mother','mother':'father',
+  'papa':'mother','father':'mother','mother':'father','ma':'papa',
   'chacha':'chachi','chachi':'chacha','fufa':'bua','bua':'fufa',
-  'mama':'mami','mami':'mama','mausa':'mausi','mausi':'mausa',
+  'mama':'mami','mami':'mama','mausa':'mausi','mausi':'mausa','maasa':'maasi','maasi':'maasa',
   'tau':'tai','tai':'tau',
   'bhaiya':'bhabhi','bhabhi':'bhaiya','jija':'didi','didi':'jija',
   'jeth':'jethani','jethani':'jeth','dewar':'devrani','devrani':'dewar',
-  'nandoi':'nanand','nanand':'nandoi','saala':'saali','saali':'saala',
-  'sadhu':'saali',
+  'nandoi':'nanand','nanand':'nandoi','saala':'saali','saali':'saala','sadhu':'saali',
   'beta':'bahu','bahu':'beta','damaad':'beti','beti':'damaad',
   'pati':'patni','patni':'pati','husband':'wife','wife':'husband','spouse':'spouse'
 };
 
 var GEN_LABELS = [
-  { gen:0, emoji:'👴👵', title:'Grandparents' },
-  { gen:1, emoji:'👨‍👩‍👦', title:'Parents & Relatives' },
-  { gen:2, emoji:'⭐', title:'You & Siblings' },
-  { gen:3, emoji:'👶', title:'Children' },
-  { gen:4, emoji:'🧒', title:'Grandchildren' }
+  {gen:0, emoji:'👴👵', title:'Grandparents'},
+  {gen:1, emoji:'👨‍👩‍👦', title:'Parents & Relatives'},
+  {gen:2, emoji:'⭐', title:'You & Siblings'},
+  {gen:3, emoji:'👶', title:'Children'},
+  {gen:4, emoji:'🧒', title:'Grandchildren'}
 ];
 
-// ============================================================
-// LAYOUT CONSTANTS
-// ============================================================
 var LEVEL_H = 160;
 var NODE_W = 110;
-var NODE_H = 95;
 var START_Y = 40;
 var START_X = 20;
 
-// ============================================================
-// FETCH & BUILD
-// ============================================================
 function getInitials(n) {
   if (!n) return '?';
-  return n.split(' ').map(function(w) { return w[0]; }).join('').substring(0,2).toUpperCase();
+  return n.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
 }
 
 function shortRel(rel) {
   if (!rel) return '';
-  return rel.split('(')[0].trim();
+  var s = rel.split('(');
+  if (s.length > 1) { var inner = s[1].replace(')','').trim(); return inner; }
+  return rel.trim();
 }
 
 async function init() {
   var urlParams = new URLSearchParams(window.location.search);
   var uid = urlParams.get('uid');
-
   var bonds = [];
   try {
     var q = db.collection('bonds');
-    if (uid) q = q.where('userId', '==', uid);
+    if (uid) q = q.where('userId','==',uid);
     var snap = await q.get();
-    snap.forEach(function(d) { bonds.push(Object.assign({ id: d.id }, d.data())); });
-  } catch(e) {
-    console.error('Firestore error:', e);
-  }
+    snap.forEach(function(d){ bonds.push(Object.assign({id:d.id}, d.data())); });
+  } catch(e) { console.error('Firestore error:',e); }
 
-  // Filter out friends/mentors and classify
   var familyBonds = [];
-  bonds.forEach(function(b) {
+  bonds.forEach(function(b){
     var c = classify(b.relationship || '');
     b._gen = c.gen;
-    b._g = c.g === 'u' ? guessGender(b.relativeName) : c.g;
+    b._g = c.g === 'u' ? guessGender(b.relativename) : c.g;
     if (c.gen < 99) familyBonds.push(b);
   });
 
-  if (familyBonds.length === 0) {
-    showEmpty();
-  } else {
-    renderTree(familyBonds);
-  }
-
+  if (familyBonds.length === 0) { showEmpty(); }
+  else { renderTree(familyBonds); }
   document.getElementById('loader').classList.add('hidden');
 }
 
 function showEmpty() {
-  document.getElementById('viewport').innerHTML = 
+  document.getElementById('viewport').innerHTML =
     '<div class="empty-state">' +
     '<div class="emoji">🌳</div>' +
     '<h2>Your Family Tree is Empty</h2>' +
     '<p>Start building your tree by adding<br>your first family member!</p>' +
-    '<button onclick="addBond()">+ Add Family Member</button>' +
-    '</div>';
+    '<button onclick="addBond()">+ Add Family Member</button></div>';
 }
 
 function renderTree(bonds) {
   var canvas = document.getElementById('canvas');
   var svg = document.getElementById('svgLayer');
-
-  // Group by generation
   var gens = {};
-  bonds.forEach(function(b) {
+  bonds.forEach(function(b){
     if (!gens[b._gen]) gens[b._gen] = [];
     gens[b._gen].push(b);
   });
-
-  // Add YOU to gen 2
   if (!gens[2]) gens[2] = [];
-  gens[2].unshift({ _isYou:true, relativeName:'You', _gen:2, _g:'m', relationship:'', location:'', profession:'' });
+  gens[2].unshift({_isYou:true, relativename:'You', _gen:2, _g:'m', relationship:'', location:'', profession:''});
 
-  // Calculate positions dynamically
-  var positions = {};
   var allNodes = [];
   var maxX = 0;
 
-  GEN_LABELS.forEach(function(gl) {
+  GEN_LABELS.forEach(function(gl){
     var members = gens[gl.gen] || [];
     if (members.length === 0) return;
-
     var y = START_Y + gl.gen * LEVEL_H;
-    var totalWidth = members.length * NODE_W;
-    var startX = Math.max(START_X, 20);
-
-    members.forEach(function(m, i) {
-      var x = startX + i * NODE_W;
-      var nodeId = m.id || m.relativeName + '_' + gl.gen + '_' + i;
-      m._nodeId = nodeId;
-      m._x = x;
-      m._y = y;
-      positions[nodeId] = { x: x, y: y };
+    members.forEach(function(m, i){
+      var x = START_X + i * NODE_W;
+      m._nodeId = m.id || (m.relativename||'') + '_' + gl.gen + '_' + i;
+      m._x = x; m._y = y;
       allNodes.push(m);
       if (x + NODE_W > maxX) maxX = x + NODE_W;
     });
   });
 
-  // Set canvas size
-  var maxY = START_Y + 5 * LEVEL_H;
-  canvas.style.width = (maxX + 40) + 'px';
+  var maxY = START_Y + 5 * LEVEL_H + 40;
+  canvas.style.width = (maxX + 60) + 'px';
   canvas.style.height = maxY + 'px';
-  svg.setAttribute('width', maxX + 40);
+  svg.setAttribute('width', maxX + 60);
   svg.setAttribute('height', maxY);
 
   var svgHtml = '';
 
-  // Draw marriage connectors — find couples
+  // Marriage connectors
   var paired = {};
-  allNodes.forEach(function(a) {
+  allNodes.forEach(function(a){
     if (a._isYou || paired[a._nodeId]) return;
     var aRel = (a.relationship || '').toLowerCase();
-    
-    // Check if this person has a couple match
-    allNodes.forEach(function(b) {
-      if (b._isYou || a._nodeId === b._nodeId || paired[b._nodeId] || a._gen !== b._gen) return;
+    allNodes.forEach(function(b){
+      if (b._nodeId === a._nodeId || paired[b._nodeId] || a._gen !== b._gen) return;
       var bRel = (b.relationship || '').toLowerCase();
-      
-      // Check couple map
       var matched = false;
-      Object.keys(COUPLES).forEach(function(k) {
-        if (aRel.indexOf(k) >= 0 && bRel.indexOf(COUPLES[k]) >= 0) matched = true;
-      });
 
-      // Check if spouse
-      if (aRel.indexOf('spouse') >= 0 || bRel.indexOf('spouse') >= 0 ||
-          aRel.indexOf('wife') >= 0 || aRel.indexOf('husband') >= 0 ||
-          aRel.indexOf('patni') >= 0 || aRel.indexOf('pati') >= 0) {
-        if (a._gen === b._gen) matched = true;
+      if (b._isYou) {
+        if (aRel.indexOf('spouse')>=0||aRel.indexOf('wife')>=0||aRel.indexOf('husband')>=0||aRel.indexOf('patni')>=0||aRel.indexOf('pati')>=0) matched = true;
+      } else {
+        Object.keys(COUPLES).forEach(function(k){
+          if (aRel.indexOf(k)>=0 && bRel.indexOf(COUPLES[k])>=0) matched = true;
+          if (bRel.indexOf(k)>=0 && aRel.indexOf(COUPLES[k])>=0) matched = true;
+        });
       }
 
-      if (matched) {
+      if (matched && !paired[a._nodeId]) {
         paired[a._nodeId] = b._nodeId;
         paired[b._nodeId] = a._nodeId;
-        
-        var ax = a._x + 45, bx = b._x + 45;
-        var y = a._y + 27;
-        var x1 = Math.min(ax, bx) + 28;
-        var x2 = Math.max(ax, bx) - 28;
+        var ax = a._x+45, bx = b._x+45, y = a._y+27;
+        var x1 = Math.min(ax,bx)+28, x2 = Math.max(ax,bx)-28;
         if (x2 > x1) {
-          svgHtml += '<line class="conn-mar" x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '"/>';
-          // Heart
-          var hx = (a._x + b._x) / 2 + 38;
-          var hy = Math.min(a._y, b._y) + 20;
+          svgHtml += '<line class="conn-mar" x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'"/>';
+          var hx = (a._x+b._x)/2+38, hy = Math.min(a._y,b._y)+20;
           var heart = document.createElement('div');
           heart.className = 'heart-badge';
           heart.textContent = '\u2665';
-          heart.style.left = hx + 'px';
-          heart.style.top = hy + 'px';
+          heart.style.left = hx+'px'; heart.style.top = hy+'px';
           canvas.appendChild(heart);
         }
       }
     });
-
-    // Check if YOU has spouse
-    if (!paired['you_node']) {
-      allNodes.forEach(function(b) {
-        if (b._isYou || paired[b._nodeId]) return;
-        var bRel = (b.relationship || '').toLowerCase();
-        if (bRel.indexOf('spouse') >= 0 || bRel.indexOf('wife') >= 0 || bRel.indexOf('husband') >= 0 || bRel.indexOf('patni') >= 0 || bRel.indexOf('pati') >= 0) {
-          var youNode = allNodes.find(function(n) { return n._isYou; });
-          if (youNode && b._gen === 2) {
-            paired[youNode._nodeId] = b._nodeId;
-            paired[b._nodeId] = youNode._nodeId;
-            var yx = youNode._x + 45, sx = b._x + 45;
-            var cy = youNode._y + 27;
-            var lx1 = Math.min(yx,sx)+28, lx2 = Math.max(yx,sx)-28;
-            if (lx2 > lx1) {
-              svgHtml += '<line class="conn-mar" x1="'+lx1+'" y1="'+cy+'" x2="'+lx2+'" y2="'+cy+'"/>';
-              var hhx = (youNode._x + b._x)/2 + 38;
-              var hhy = Math.min(youNode._y, b._y) + 20;
-              var h2 = document.createElement('div');
-              h2.className = 'heart-badge';
-              h2.textContent = '\u2665';
-              h2.style.left = hhx+'px';
-              h2.style.top = hhy+'px';
-              canvas.appendChild(h2);
-            }
-          }
-        }
-      });
-    }
   });
 
-  // Draw parent-child connectors (gen N → gen N+1)
-  // Find midpoint of each generation and connect to children below
-  [0,1,2,3].forEach(function(parentGen) {
-    var parents = gens[parentGen] || [];
-    var children = gens[parentGen + 1] || [];
-    if (parents.length === 0 || children.length === 0) return;
-
-    // Find center of parent row
-    var parentMidX = 0;
-    var parentCount = 0;
-    parents.forEach(function(p) {
-      if (!p._isYou) { parentMidX += p._x + 45; parentCount++; }
-      else { parentMidX += p._x + 45; parentCount++; }
+  // Also check YOU + spouse
+  var youNode = allNodes.find(function(n){return n._isYou;});
+  if (youNode && !paired[youNode._nodeId]) {
+    allNodes.forEach(function(b){
+      if (b._isYou || b._gen !== 2 || paired[b._nodeId]) return;
+      var bRel = (b.relationship||'').toLowerCase();
+      if (bRel.indexOf('spouse')>=0||bRel.indexOf('wife')>=0||bRel.indexOf('husband')>=0||bRel.indexOf('patni')>=0||bRel.indexOf('pati')>=0) {
+        paired[youNode._nodeId] = b._nodeId;
+        paired[b._nodeId] = youNode._nodeId;
+        var yx=youNode._x+45, sx=b._x+45, cy=youNode._y+27;
+        var lx1=Math.min(yx,sx)+28, lx2=Math.max(yx,sx)-28;
+        if (lx2>lx1) {
+          svgHtml += '<line class="conn-mar" x1="'+lx1+'" y1="'+cy+'" x2="'+lx2+'" y2="'+cy+'"/>';
+          var hhx=(youNode._x+b._x)/2+38, hhy=Math.min(youNode._y,b._y)+20;
+          var h2=document.createElement('div'); h2.className='heart-badge'; h2.textContent='\u2665';
+          h2.style.left=hhx+'px'; h2.style.top=hhy+'px'; canvas.appendChild(h2);
+        }
+      }
     });
-    parentMidX = parentMidX / parentCount;
-    var parentBottomY = START_Y + parentGen * LEVEL_H + 60;
-    var childTopY = START_Y + (parentGen + 1) * LEVEL_H - 4;
-    var midY = parentBottomY + (childTopY - parentBottomY) * 0.45;
+  }
 
-    children.forEach(function(c) {
-      var cx = c._x + 45;
-      svgHtml += '<path class="conn-pc" d="M'+parentMidX+','+parentBottomY+' L'+parentMidX+','+midY+' L'+cx+','+midY+' L'+cx+','+childTopY+'"/>';
+  // Parent-child connectors
+  [0,1,2,3].forEach(function(pg){
+    var parents = gens[pg] || [];
+    var children = gens[pg+1] || [];
+    if (parents.length===0 || children.length===0) return;
+    var pmx=0, pc=0;
+    parents.forEach(function(p){ pmx+=p._x+45; pc++; });
+    pmx = pmx/pc;
+    var pby = START_Y + pg*LEVEL_H + 60;
+    var cty = START_Y + (pg+1)*LEVEL_H - 4;
+    var my = pby + (cty-pby)*0.45;
+    children.forEach(function(c){
+      if (c._isYou) return;
+      var cx = c._x+45;
+      svgHtml += '<path class="conn-pc" d="M'+pmx+','+pby+' L'+pmx+','+my+' L'+cx+','+my+' L'+cx+','+cty+'"/>';
     });
   });
 
   svg.innerHTML = svgHtml;
 
   // Generation labels
-  GEN_LABELS.forEach(function(gl) {
+  GEN_LABELS.forEach(function(gl){
     var members = gens[gl.gen] || [];
-    if (members.length === 0 && gl.gen !== 2) return;
-
+    if (members.length===0 && gl.gen!==2) return;
     var stripe = document.createElement('div');
     stripe.className = 'gen-stripe';
-    stripe.style.top = (START_Y + gl.gen * LEVEL_H - 28) + 'px';
-    stripe.innerHTML = '<span>' + gl.emoji + ' ' + gl.title + '</span>';
+    stripe.style.top = (START_Y + gl.gen*LEVEL_H - 28) + 'px';
+    stripe.innerHTML = '<span>'+gl.emoji+' '+gl.title+'</span>';
     canvas.appendChild(stripe);
   });
 
-  // Render person nodes
-  allNodes.forEach(function(m) {
+  // Person nodes
+  allNodes.forEach(function(m){
     var node = document.createElement('div');
     node.className = 'node';
-    node.style.left = m._x + 'px';
-    node.style.top = m._y + 'px';
-    node.onclick = function() { showPopup(m); };
-
+    node.style.left = m._x+'px'; node.style.top = m._y+'px';
+    node.onclick = function(){ showPopup(m); };
     var isYou = m._isYou;
-    var circleClass = isYou ? 'you-node' : (m._g === 'f' ? 'female' : 'male');
-    var displayName = m.relativeName || '?';
-    var rel = shortRel(m.relationship || '');
-
+    var cc = isYou ? 'you-node' : (m._g==='f' ? 'female' : 'male');
+    var dn = m.relativename || '?';
+    var dr = shortRel(m.relationship || '');
     node.innerHTML =
-      '<div class="node-circle ' + circleClass + '">' + (isYou ? '\u2605YOU' : getInitials(displayName)) + '</div>' +
-      '<div class="node-name">' + displayName + '</div>' +
-      (rel ? '<div class="node-relation">' + rel + '</div>' : '') +
-      (m.location ? '<div class="node-location">\uD83D\uDCCD ' + m.location + '</div>' : '');
-
+      '<div class="node-circle '+cc+'">'+(isYou?'\u2605YOU':getInitials(dn))+'</div>'+
+      '<div class="node-name">'+dn+'</div>'+
+      (dr ? '<div class="node-relation">'+dr+'</div>' : '')+
+      (m.location ? '<div class="node-location">\uD83D\uDCCD '+m.location+'</div>' : '');
     canvas.appendChild(node);
   });
 }
 
-// ============================================================
-// POPUP
-// ============================================================
 function showPopup(p) {
   if (p._isYou) return;
-  document.getElementById('pAvatar').style.background = p._g === 'f' ? '#E91E63' : '#2980B9';
-  document.getElementById('pAvatar').textContent = getInitials(p.relativeName || p.name);
-  document.getElementById('pName').textContent = p.relativeName || '';
+  document.getElementById('pAvatar').style.background = p._g==='f' ? '#E91E63' : '#2980B9';
+  document.getElementById('pAvatar').textContent = getInitials(p.relativename||'');
+  document.getElementById('pName').textContent = p.relativename || '';
   document.getElementById('pRelation').textContent = p.relationship || '';
-
   var rows = '';
-  if (p.profession) rows += '<div class="popup-row"><span class="popup-icon">\uD83D\uDCBC</span>' + p.profession + '</div>';
-  if (p.location) rows += '<div class="popup-row"><span class="popup-icon">\uD83D\uDCCD</span>' + p.location + '</div>';
-  if (p.relativePhone) rows += '<div class="popup-row"><span class="popup-icon">\uD83D\uDCDE</span>' + p.relativePhone + '</div>';
+  if (p.profession) rows += '<div class="popup-row"><span class="popup-icon">\uD83D\uDCBC</span>'+p.profession+'</div>';
+  if (p.location) rows += '<div class="popup-row"><span class="popup-icon">\uD83D\uDCCD</span>'+p.location+'</div>';
+  if (p.relativePhone) rows += '<div class="popup-row"><span class="popup-icon">\uD83D\uDCDE</span>'+p.relativePhone+'</div>';
   if (!rows) rows = '<div class="popup-row" style="justify-content:center;color:#bbb">No details added yet</div>';
   document.getElementById('pRows').innerHTML = rows;
   document.getElementById('overlay').classList.add('active');
 }
 
-function closePopup() {
-  document.getElementById('overlay').classList.remove('active');
-}
+function closePopup() { document.getElementById('overlay').classList.remove('active'); }
+function addBond() { alert('Navigate to Add Bond page'); }
 
-function addBond() {
-  alert('Navigate to Add Bond page');
-}
-
-// ============================================================
-// INIT
-// ============================================================
 init();
-
-setTimeout(function() {
-  var hint = document.getElementById('hint');
-  if (hint) { hint.style.opacity = '0'; setTimeout(function(){ hint.style.display='none'; }, 1000); }
-}, 3000);
+setTimeout(function(){
+  var h=document.getElementById('hint');
+  if(h){h.style.opacity='0';setTimeout(function(){h.style.display='none';},1000);}
+},3000);
 </script>
 </body>
 </html>
