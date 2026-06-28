@@ -95,9 +95,8 @@ firebase.initializeApp({
 var db=firebase.firestore();
 
 // ============================================================
-// READS testRelation FIELD (typed by user — reliable)
-// READS marriedTo FIELD (for couple matching)
-// Falls back to relationship field if testRelation empty
+// READS: testRelation FIRST → relationship as fallback
+// This way works whether dropdown is fixed or testRelation is used
 // ============================================================
 
 function classify(rel){
@@ -105,81 +104,84 @@ function classify(rel){
   var r=rel.toLowerCase().trim();
 
   // Gen 0: Grandparents
-  if(r==='dada'||r.indexOf('dada')>=0&&r.indexOf('grand')>=0)return{gen:0,g:'m'};
-  if(r==='dadi'||r.indexOf('dadi')>=0&&r.indexOf('grand')>=0)return{gen:0,g:'f'};
-  if(r==='nana'||r.indexOf('nana')>=0&&r.indexOf('grand')>=0)return{gen:0,g:'m'};
-  if(r==='nani'||r.indexOf('nani')>=0&&r.indexOf('grand')>=0)return{gen:0,g:'f'};
+  if(r==='dada'||r==='grand father (dada)'||r==='grandfather (dada)')return{gen:0,g:'m'};
+  if(r==='dadi'||r==='grand mother (dadi)'||r==='grandmother (dadi)')return{gen:0,g:'f'};
+  if(r==='nana'||r==='grand father (nana)'||r==='grandfather (nana)')return{gen:0,g:'m'};
+  if(r==='nani'||r==='grand mother (nani)'||r==='grandmother (nani)')return{gen:0,g:'f'};
   if(r==='grandfather'||r==='grandpa')return{gen:0,g:'m'};
   if(r==='grandmother'||r==='grandma')return{gen:0,g:'f'};
-  // Catch any "grand father" or "grand mother"
-  if(r.indexOf('grand')>=0&&(r.indexOf('father')>=0||r.indexOf('pa')>=0))return{gen:0,g:'m'};
-  if(r.indexOf('grand')>=0&&(r.indexOf('mother')>=0||r.indexOf('ma')>=0))return{gen:0,g:'f'};
+  if(r.indexOf('grand')>=0&&(r.indexOf('father')>=0||r.indexOf('pa')>=0)&&r.indexOf('son')<0&&r.indexOf('daughter')<0)return{gen:0,g:'m'};
+  if(r.indexOf('grand')>=0&&(r.indexOf('mother')>=0||r.indexOf('ma')>=0)&&r.indexOf('son')<0&&r.indexOf('daughter')<0)return{gen:0,g:'f'};
 
   // Gen 1: Parents & their generation
-  if(r==='papa'||r==='father'||r==='pitaji')return{gen:1,g:'m'};
-  if(r==='ma'||r==='mother'||r==='maa'||r==='mummy')return{gen:1,g:'f'};
-  if(r==='tau'||r==='tauji')return{gen:1,g:'m'};
-  if(r==='tai'||r==='taiji')return{gen:1,g:'f'};
-  if(r==='chacha'||r==='chachaji')return{gen:1,g:'m'};
-  if(r==='chachi'||r==='chachiji')return{gen:1,g:'f'};
-  if(r==='bua'||r==='buaji'||r==='phuaji')return{gen:1,g:'f'};
-  if(r==='fufa'||r==='fufaji'||r==='phufaji')return{gen:1,g:'m'};
-  if(r==='mama'||r==='mamaji')return{gen:1,g:'m'};
-  if(r==='mami'||r==='mamiji')return{gen:1,g:'f'};
-  if(r==='mausi'||r==='mausiji'||r==='maasi')return{gen:1,g:'f'};
-  if(r==='mausa'||r==='mausaji'||r==='maasad')return{gen:1,g:'m'};
+  if(r==='papa'||r==='father (papa)'||r==='father')return{gen:1,g:'m'};
+  if(r==='ma'||r==='mother (ma)'||r==='mother'||r==='maa'||r==='mummy')return{gen:1,g:'f'};
+  if(r==='tau'||r==='father\'s elder brother (tau)'||r.indexOf('tau')>=0&&r.indexOf('elder brother')>=0)return{gen:1,g:'m'};
+  if(r==='tai'||r==='father\'s elder brother\'s wife (tai)'||r.indexOf('tai')>=0&&r.indexOf('wife')>=0)return{gen:1,g:'f'};
+  if(r==='chacha'||r==='father\'s younger brother (chacha)'||r.indexOf('chacha')>=0)return{gen:1,g:'m'};
+  if(r==='chachi'||r==='father\'s younger brother\'s wife (chachi)'||r.indexOf('chachi')>=0)return{gen:1,g:'f'};
+  if(r==='bua'||r==='father\'s sister (bua)'||r.indexOf('bua')>=0)return{gen:1,g:'f'};
+  if(r==='fufa'||r==='father\'s sister\'s husband (fufa)'||r.indexOf('fufa')>=0)return{gen:1,g:'m'};
+  if(r==='mama'||r==='mother\'s brother (mama)'||r.indexOf('mama')>=0&&r.indexOf('grand')<0)return{gen:1,g:'m'};
+  if(r==='mami'||r==='mother\'s brother\'s wife (mami)'||r.indexOf('mami')>=0)return{gen:1,g:'f'};
+  if(r==='mausi'||r==='mother\'s sister (mausi)'||r.indexOf('mausi')>=0||r.indexOf('maasi')>=0)return{gen:1,g:'f'};
+  if(r==='mausa'||r==='mother\'s sister\'s husband (mausa)'||r.indexOf('mausa')>=0)return{gen:1,g:'m'};
   if(r==='sasur'||r==='sasurji')return{gen:1,g:'m'};
   if(r==='saas'||r==='saasji'||r==='sasu')return{gen:1,g:'f'};
   if(r==='uncle')return{gen:1,g:'m'};
-  if(r==='aunt'||r==='aunty'||r==='auntie')return{gen:1,g:'f'};
+  if(r==='aunt'||r==='aunty')return{gen:1,g:'f'};
+  // Fallback for parent-level words
+  if(r.indexOf('father')>=0&&r.indexOf('grand')<0&&r.indexOf('in-law')<0&&r.indexOf('in law')<0)return{gen:1,g:'m'};
+  if(r.indexOf('mother')>=0&&r.indexOf('grand')<0&&r.indexOf('in-law')<0&&r.indexOf('in law')<0)return{gen:1,g:'f'};
 
   // Gen 2: You & Siblings
-  if(r==='bhaiya'||r==='bhai sahab'||r==='elder brother')return{gen:2,g:'m'};
-  if(r==='bhabhi'||r==='bhabhiji')return{gen:2,g:'f'};
-  if(r==='didi'||r==='elder sister')return{gen:2,g:'f'};
-  if(r==='jija'||r==='jijaji')return{gen:2,g:'m'};
-  if(r==='bhai'||r==='younger brother'||r==='brother')return{gen:2,g:'m'};
-  if(r==='behen'||r==='younger sister'||r==='sister')return{gen:2,g:'f'};
-  if(r==='husband'||r==='pati')return{gen:2,g:'m'};
-  if(r==='wife'||r==='patni')return{gen:2,g:'f'};
+  if(r==='bhaiya'||r==='elder brother (bhaiya)'||r.indexOf('bhaiya')>=0)return{gen:2,g:'m'};
+  if(r==='bhabhi'||r==='elder brother\'s wife (bhabhi)'||r.indexOf('bhabhi')>=0)return{gen:2,g:'f'};
+  if(r==='didi'||r==='elder sister (didi)'||r.indexOf('didi')>=0)return{gen:2,g:'f'};
+  if(r==='jija'||r==='elder sister\'s husband (jija)'||r.indexOf('jija')>=0)return{gen:2,g:'m'};
+  if(r==='bhai'||r==='younger brother (bhai)'||r.indexOf('bhai')>=0&&r.indexOf('bhaiya')<0&&r.indexOf('sahab')<0)return{gen:2,g:'m'};
+  if(r==='behen'||r==='younger sister (behen)'||r.indexOf('behen')>=0)return{gen:2,g:'f'};
+  if(r==='husband (pati)'||r==='husband'||r==='pati')return{gen:2,g:'m'};
+  if(r==='wife (patni)'||r==='wife'||r==='patni')return{gen:2,g:'f'};
   if(r==='spouse')return{gen:2,g:'u'};
-  if(r==='cousin brother'||r==='cousin bhai')return{gen:2,g:'m'};
-  if(r==='cousin sister'||r==='cousin behen')return{gen:2,g:'f'};
+  if(r.indexOf('cousin brother')>=0)return{gen:2,g:'m'};
+  if(r.indexOf('cousin sister')>=0)return{gen:2,g:'f'};
   if(r==='cousin')return{gen:2,g:'u'};
-  // In-laws at your level
-  if(r==='jeth'||r==='jethji')return{gen:2,g:'m'};
-  if(r==='jethani')return{gen:2,g:'f'};
-  if(r==='dewar'||r==='devarji')return{gen:2,g:'m'};
-  if(r==='devrani')return{gen:2,g:'f'};
-  if(r==='nanand'||r==='nanad')return{gen:2,g:'f'};
-  if(r==='nandoi')return{gen:2,g:'m'};
-  if(r==='saali')return{gen:2,g:'f'};
-  if(r==='sadhu'||r==='saadhu')return{gen:2,g:'m'};
-  if(r==='saala')return{gen:2,g:'m'};
-  if(r==='bhai sahab')return{gen:2,g:'m'};
-  if(r==='sahlaj')return{gen:2,g:'f'};
-  if(r==='behnoi')return{gen:2,g:'m'};
+  if(r.indexOf('brother')>=0&&r.indexOf('grand')<0&&r.indexOf('in-law')<0)return{gen:2,g:'m'};
+  if(r.indexOf('sister')>=0&&r.indexOf('grand')<0&&r.indexOf('in-law')<0)return{gen:2,g:'f'};
+  if(r.indexOf('jeth')>=0&&r.indexOf('jethani')<0)return{gen:2,g:'m'};
+  if(r.indexOf('jethani')>=0)return{gen:2,g:'f'};
+  if(r.indexOf('dewar')>=0&&r.indexOf('devrani')<0)return{gen:2,g:'m'};
+  if(r.indexOf('devrani')>=0)return{gen:2,g:'f'};
+  if(r.indexOf('nanand')>=0||r.indexOf('nanad')>=0)return{gen:2,g:'f'};
+  if(r.indexOf('nandoi')>=0)return{gen:2,g:'m'};
+  if(r.indexOf('saali')>=0)return{gen:2,g:'f'};
+  if(r.indexOf('sadhu')>=0)return{gen:2,g:'m'};
+  if(r.indexOf('saala')>=0)return{gen:2,g:'m'};
+  if(r.indexOf('behnoi')>=0)return{gen:2,g:'m'};
 
   // Gen 3: Children
-  if(r==='beta'||r==='son')return{gen:3,g:'m'};
-  if(r==='beti'||r==='daughter')return{gen:3,g:'f'};
-  if(r==='bahu'||r==='daughter-in-law'||r==='daughter in law')return{gen:3,g:'f'};
-  if(r==='damaad'||r==='son-in-law'||r==='son in law')return{gen:3,g:'m'};
+  if(r==='beta'||r==='son (beta)'||r==='son')return{gen:3,g:'m'};
+  if(r==='beti'||r==='daughter (beti)'||r==='daughter')return{gen:3,g:'f'};
+  if(r==='bahu'||r==='daughter-in-law (bahu)'||r.indexOf('bahu')>=0||r.indexOf('daughter-in-law')>=0||r.indexOf('daughter in law')>=0)return{gen:3,g:'f'};
+  if(r==='damaad'||r==='son-in-law (damaad)'||r.indexOf('damaad')>=0||r.indexOf('son-in-law')>=0||r.indexOf('son in law')>=0)return{gen:3,g:'m'};
 
   // Gen 4: Grandchildren
-  if(r==='pota'||r==='grandson')return{gen:4,g:'m'};
-  if(r==='poti'||r==='granddaughter')return{gen:4,g:'f'};
-  if(r==='nati')return{gen:4,g:'m'};
-  if(r==='natin')return{gen:4,g:'f'};
+  if(r==='pota'||r==='grandson (pota)'||r==='grandson')return{gen:4,g:'m'};
+  if(r==='poti'||r==='granddaughter (poti)'||r==='granddaughter')return{gen:4,g:'f'};
+  if(r==='nati'||r==='daughter\'s son (nati)')return{gen:4,g:'m'};
+  if(r==='natin'||r==='daughter\'s daughter (natin)')return{gen:4,g:'f'};
 
-  // Skip friends/mentors
+  // Friends/Mentors — exclude from tree
   if(r==='friend'||r==='mentor')return{gen:99,g:'u'};
   if(r==='other')return{gen:2,g:'u'};
 
-  // Fallback — try partial matching
-  if(r.indexOf('papa')>=0||r.indexOf('father')>=0&&r.indexOf('grand')<0)return{gen:1,g:'m'};
-  if(r.indexOf('ma')>=0&&r.indexOf('mama')<0&&r.indexOf('mausi')<0&&r.indexOf('grand')<0&&r.length<8)return{gen:1,g:'f'};
-  if(r.indexOf('mother')>=0&&r.indexOf('grand')<0)return{gen:1,g:'f'};
+  // Final fallback partial matching
+  if(r.indexOf('dada')>=0)return{gen:0,g:'m'};
+  if(r.indexOf('dadi')>=0)return{gen:0,g:'f'};
+  if(r.indexOf('nana')>=0&&r.indexOf('nand')<0)return{gen:0,g:'m'};
+  if(r.indexOf('nani')>=0)return{gen:0,g:'f'};
+  if(r.indexOf('papa')>=0)return{gen:1,g:'m'};
   if(r.indexOf('chacha')>=0)return{gen:1,g:'m'};
   if(r.indexOf('chachi')>=0)return{gen:1,g:'f'};
   if(r.indexOf('mama')>=0)return{gen:1,g:'m'};
@@ -198,14 +200,14 @@ function classify(rel){
   if(r.indexOf('behen')>=0)return{gen:2,g:'f'};
   if(r.indexOf('husband')>=0||r.indexOf('pati')>=0)return{gen:2,g:'m'};
   if(r.indexOf('wife')>=0||r.indexOf('patni')>=0)return{gen:2,g:'f'};
-  if(r.indexOf('beta')>=0||r.indexOf('son')>=0&&r.indexOf('grand')<0)return{gen:3,g:'m'};
-  if(r.indexOf('beti')>=0||r.indexOf('daughter')>=0&&r.indexOf('grand')<0)return{gen:3,g:'f'};
+  if(r.indexOf('beta')>=0)return{gen:3,g:'m'};
+  if(r.indexOf('beti')>=0)return{gen:3,g:'f'};
   if(r.indexOf('bahu')>=0)return{gen:3,g:'f'};
   if(r.indexOf('damaad')>=0)return{gen:3,g:'m'};
-  if(r.indexOf('pota')>=0||r.indexOf('grandson')>=0)return{gen:4,g:'m'};
-  if(r.indexOf('poti')>=0||r.indexOf('granddaughter')>=0)return{gen:4,g:'f'};
-  if(r.indexOf('nati')>=0&&r.indexOf('natin')<0)return{gen:4,g:'m'};
+  if(r.indexOf('pota')>=0)return{gen:4,g:'m'};
+  if(r.indexOf('poti')>=0)return{gen:4,g:'f'};
   if(r.indexOf('natin')>=0)return{gen:4,g:'f'};
+  if(r.indexOf('nati')>=0)return{gen:4,g:'m'};
 
   return{gen:2,g:'u'};
 }
@@ -214,7 +216,7 @@ function guessGender(name){
   if(!name)return 'm';
   var n=name.toLowerCase();
   var fh=['devi','kumari','bai','amma','priya','anjali','sita','geeta','kavita','sunita','neha','meera','pooja','sneha','nisha','prabha','rekha','lata','seema','anita','shanti','pushpa','savitri','lakshmi','radha','gita'];
-  for(var i=0;i<fh.length;i++){if(n.indexOf(fh[i])>=0)return 'f';}
+  for(var i=0;i<fh.length;i++){if(n.indexOf(fh[i])>=0)return 'f'}
   return 'm';
 }
 
@@ -241,10 +243,10 @@ async function init(){
     snap.forEach(function(d){bonds.push(Object.assign({id:d.id},d.data()))});
   }catch(e){console.error('Firestore error:',e)}
 
-  // *** KEY CHANGE: Read testRelation FIRST, fall back to relationship ***
+  // KEY: Read testRelation first, fallback to relationship
   var familyBonds=[];
   bonds.forEach(function(b){
-    var relField = b.testRelation || b.relationship || '';
+    var relField=b.testRelation||b.relationship||'';
     var c=classify(relField);
     b._gen=c.gen;
     b._g=c.g==='u'?guessGender(b.relativename):c.g;
@@ -252,8 +254,8 @@ async function init(){
     if(c.gen<99)familyBonds.push(b);
   });
 
-  if(familyBonds.length===0){showEmpty();}
-  else{renderTree(familyBonds);}
+  if(familyBonds.length===0){showEmpty()}
+  else{renderTree(familyBonds)}
   document.getElementById('loader').classList.add('hidden');
 }
 
@@ -276,43 +278,35 @@ function renderTree(bonds){
   var allNodes=[];
   var maxX=0;
 
-  // Position nodes — place couples side by side
+  // Position nodes with couple sorting using marriedTo
   GEN_LABELS.forEach(function(gl){
     var members=gens[gl.gen]||[];
     if(members.length===0)return;
     var y=START_Y+gl.gen*LEVEL_H;
 
-    // Sort: try to place couples together using marriedTo field
+    // Sort couples together
     var ordered=[];
     var placed=new Set();
-
     members.forEach(function(m,i){
       if(placed.has(i))return;
-      ordered.push(m);
-      placed.add(i);
-
-      // Look for spouse using marriedTo field
+      ordered.push(m);placed.add(i);
+      // Find spouse by marriedTo
       if(m.marriedTo&&m.marriedTo.trim()){
         var spouseName=m.marriedTo.trim().toLowerCase();
         for(var j=0;j<members.length;j++){
           if(placed.has(j))continue;
           if(members[j].relativename&&members[j].relativename.trim().toLowerCase()===spouseName){
-            ordered.push(members[j]);
-            placed.add(j);
-            break;
+            ordered.push(members[j]);placed.add(j);break;
           }
         }
       }
-
-      // Also check if someone lists THIS person as their marriedTo
+      // Reverse check
       if(!m._isYou){
         var myName=(m.relativename||'').trim().toLowerCase();
         for(var k=0;k<members.length;k++){
           if(placed.has(k))continue;
           if(members[k].marriedTo&&members[k].marriedTo.trim().toLowerCase()===myName){
-            ordered.push(members[k]);
-            placed.add(k);
-            break;
+            ordered.push(members[k]);placed.add(k);break;
           }
         }
       }
@@ -332,50 +326,39 @@ function renderTree(bonds){
   canvas.style.height=maxY+'px';
   svg.setAttribute('width',maxX+60);
   svg.setAttribute('height',maxY);
-
   var svgHtml='';
 
-  // *** COUPLE MATCHING using marriedTo field ***
+  // Marriage connectors using marriedTo field
   var coupled={};
   allNodes.forEach(function(a){
     if(a._isYou||coupled[a._nodeId])return;
     if(!a.marriedTo||!a.marriedTo.trim())return;
     var spouseName=a.marriedTo.trim().toLowerCase();
     allNodes.forEach(function(b){
-      if(b._nodeId===a._nodeId||coupled[b._nodeId])return;
-      if(b._isYou){
-        // Check if YOU is the spouse
-        return;
-      }
+      if(b._nodeId===a._nodeId||coupled[b._nodeId]||b._isYou)return;
       var bName=(b.relativename||'').trim().toLowerCase();
       if(bName===spouseName){
-        coupled[a._nodeId]=b._nodeId;
-        coupled[b._nodeId]=a._nodeId;
-        // Draw marriage line
+        coupled[a._nodeId]=b._nodeId;coupled[b._nodeId]=a._nodeId;
         var ax=a._x+45,bx=b._x+45,y=a._y+27;
         var x1=Math.min(ax,bx)+28,x2=Math.max(ax,bx)-28;
         if(x2>x1){
           svgHtml+='<line class="conn-mar" x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'"/>';
           var hx=(a._x+b._x)/2+38,hy=Math.min(a._y,b._y)+20;
-          var heart=document.createElement('div');
-          heart.className='heart-badge';heart.textContent='\u2665';
-          heart.style.left=hx+'px';heart.style.top=hy+'px';
-          canvas.appendChild(heart);
+          var heart=document.createElement('div');heart.className='heart-badge';heart.textContent='\u2665';
+          heart.style.left=hx+'px';heart.style.top=hy+'px';canvas.appendChild(heart);
         }
       }
     });
   });
 
-  // Check if YOU has a spouse (wife/husband/patni/pati in testRelation)
+  // YOU + spouse
   var youNode=allNodes.find(function(n){return n._isYou});
   if(youNode&&!coupled[youNode._nodeId]){
     allNodes.forEach(function(b){
       if(b._isYou||b._gen!==2||coupled[b._nodeId])return;
       var bRel=(b._relDisplay||'').toLowerCase();
-      if(bRel==='wife'||bRel==='husband'||bRel==='patni'||bRel==='pati'||bRel==='spouse'||
-         bRel.indexOf('wife')>=0||bRel.indexOf('husband')>=0||bRel.indexOf('patni')>=0||bRel.indexOf('pati')>=0){
-        coupled[youNode._nodeId]=b._nodeId;
-        coupled[b._nodeId]=youNode._nodeId;
+      if(bRel.indexOf('wife')>=0||bRel.indexOf('husband')>=0||bRel.indexOf('patni')>=0||bRel.indexOf('pati')>=0||bRel==='spouse'){
+        coupled[youNode._nodeId]=b._nodeId;coupled[b._nodeId]=youNode._nodeId;
         var yx=youNode._x+45,sx=b._x+45,cy=youNode._y+27;
         var lx1=Math.min(yx,sx)+28,lx2=Math.max(yx,sx)-28;
         if(lx2>lx1){
@@ -390,8 +373,7 @@ function renderTree(bonds){
 
   // Parent-child connectors
   [0,1,2,3].forEach(function(pg){
-    var parents=gens[pg]||[];
-    var children=gens[pg+1]||[];
+    var parents=gens[pg]||[];var children=gens[pg+1]||[];
     if(parents.length===0||children.length===0)return;
     var pmx=0,pc=0;
     parents.forEach(function(p){pmx+=p._x+45;pc++});
@@ -412,8 +394,7 @@ function renderTree(bonds){
   GEN_LABELS.forEach(function(gl){
     var members=gens[gl.gen]||[];
     if(members.length===0&&gl.gen!==2)return;
-    var stripe=document.createElement('div');
-    stripe.className='gen-stripe';
+    var stripe=document.createElement('div');stripe.className='gen-stripe';
     stripe.style.top=(START_Y+gl.gen*LEVEL_H-28)+'px';
     stripe.innerHTML='<span>'+gl.emoji+' '+gl.title+'</span>';
     canvas.appendChild(stripe);
@@ -421,8 +402,7 @@ function renderTree(bonds){
 
   // Person nodes
   allNodes.forEach(function(m){
-    var node=document.createElement('div');
-    node.className='node';
+    var node=document.createElement('div');node.className='node';
     node.style.left=m._x+'px';node.style.top=m._y+'px';
     node.onclick=function(){showPopup(m)};
     var isYou=m._isYou;
