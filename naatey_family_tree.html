@@ -570,8 +570,9 @@ function renderTree(bonds){
   });
 
   // Fallback connectors for nodes with no parent resolved
-  // Groups by branch within each generation pair
-  [0,1,2,3].forEach(function(pg){
+  // Skip Gen 0 entirely — grandparents are roots, no parent above them
+  // For Gen 1+, only connect within SAME branch to avoid cross-branch lines
+  [1,2,3].forEach(function(pg){
     var parents=(gens[pg]||[]).filter(function(p){return !p._isYou;});
     var children=(gens[pg+1]||[]).filter(function(c){
       return !c._isYou&&!drawnDirectly.has(c._nodeId);
@@ -595,6 +596,8 @@ function renderTree(bonds){
       var bP=branchParents[br]||[];
       var bC=branchChildren[br]||[];
       if(bP.length===0||bC.length===0)return;
+      // Only draw if branches match exactly — no cross-branch lines
+      if(!branchChildren[br]||branchChildren[br].length===0)return;
       var pmx=0,pc=0;
       bP.forEach(function(p){pmx+=p._x+45;pc++;});
       pmx=pmx/pc;
@@ -602,7 +605,10 @@ function renderTree(bonds){
       var cty=START_Y+(pg+1)*LEVEL_H-4;
       var my=pby+(cty-pby)*0.45;
       bC.forEach(function(c){
-        svgHtml+='<path class="conn-pc" d="M'+pmx+','+pby+' L'+pmx+','+my+' L'+(c._x+45)+','+my+' L'+(c._x+45)+','+cty+'"/>';
+        // Double check branch matches before drawing
+        if((c._branch||'self')===br){
+          svgHtml+='<path class="conn-pc" d="M'+pmx+','+pby+' L'+pmx+','+my+' L'+(c._x+45)+','+my+' L'+(c._x+45)+','+cty+'"/>';
+        }
       });
     });
   });
