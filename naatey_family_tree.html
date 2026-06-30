@@ -59,6 +59,17 @@
   .empty-state p{font-size:14px;color:#5A4A3A;margin-bottom:20px;line-height:1.5}
   .empty-state button{padding:12px 28px;background:#C0392B;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(192,57,43,.3)}
   .pinch-hint{position:fixed;top:58px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;z-index:60;transition:opacity 1s;pointer-events:none}
+  .friends-section{margin-top:20px;padding:20px 16px 100px;border-top:2px dashed #e0cfc8}
+  .friends-header{font-size:15px;font-weight:700;color:#8B7355;margin-bottom:14px}
+  .friends-row{display:flex;flex-wrap:wrap;gap:14px}
+  .friend-card{display:flex;flex-direction:column;align-items:center;width:90px;cursor:pointer}
+  .friend-card:active{transform:scale(.95)}
+  .friend-circle{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15)}
+  .friend-circle.male{background:#5DADE2}
+  .friend-circle.female{background:#F1948A}
+  .friend-name{font-size:10px;font-weight:700;text-align:center;margin-top:5px;width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .friend-tag{font-size:8px;color:#8B7355;text-align:center;margin-top:1px}
+  .friend-location{font-size:8px;color:#999;text-align:center;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:88px}
 </style>
 </head>
 <body>
@@ -161,7 +172,7 @@ function classify(rel){
   if(r==='poti'||r.indexOf('granddaughter (poti)')>=0||r==='granddaughter')return{gen:4,g:'f'};
   if(r==='nati'||r.indexOf("daughter's son (nati)")>=0)return{gen:4,g:'m'};
   if(r==='natin'||r.indexOf("daughter's daughter (natin)")>=0)return{gen:4,g:'f'};
-  if(r==='friend'||r==='mentor')return{gen:99,g:'u'};
+  if(r==='friend'||r==='mentor'||r.indexOf('friend')>=0||r.indexOf('mentor')>=0)return{gen:99,g:'u'};
   if(r==='other')return{gen:2,g:'u'};
   // partial fallbacks
   if(r.indexOf('dada')>=0)return{gen:0,g:'m'};
@@ -392,6 +403,7 @@ async function init(){
   }catch(e){console.error('Firestore error:',e)}
 
   var familyBonds=[];
+  var friendBonds=[];
   bonds.forEach(function(b){
     var relField=b.testRelation||b.relationship||'';
     var c=classify(relField);
@@ -399,22 +411,73 @@ async function init(){
     b._g=c.g==='u'?guessGender(b.relativename):c.g;
     b._relDisplay=relField;
     if(c.gen<99) familyBonds.push(b);
+    else friendBonds.push(b); // Friends & Mentors go to separate section
   });
 
-  if(familyBonds.length===0){showEmpty();return;}
+  if(familyBonds.length===0 && friendBonds.length===0){showEmpty();return;}
 
-  // Insert YOU node
-  var youNode={_isYou:true,id:'__you__',relativename:'You',_gen:2,_g:'m',_relDisplay:'',_branch:'self'};
-  familyBonds.unshift(youNode);
+  if(familyBonds.length>0){
+    // Insert YOU node
+    var youNode={_isYou:true,id:'__you__',relativename:'You',_gen:2,_g:'m',_relDisplay:'',_branch:'self'};
+    familyBonds.unshift(youNode);
 
-  // Auto-link: assign _autoParentId based on relationship rules
-  autoLink(familyBonds);
+    // Auto-link: assign _autoParentId based on relationship rules
+    autoLink(familyBonds);
 
-  // Assign branches (paternal/maternal/self/spouse)
-  assignBranches(familyBonds);
+    // Assign branches (paternal/maternal/self/spouse)
+    assignBranches(familyBonds);
 
-  renderTree(familyBonds);
+    renderTree(familyBonds);
+  } else {
+    showEmpty(true); // show empty family state but still render friends below
+  }
+
+  renderFriends(friendBonds);
   document.getElementById('loader').classList.add('hidden');
+}
+
+// ============================================================
+// RENDER FRIENDS & MENTORS — separate horizontal section
+// Not part of the generational family tree; simple card row
+// ============================================================
+function renderFriends(friends){
+  var existing=document.getElementById('friendsSection');
+  if(existing) existing.remove();
+
+  if(!friends || friends.length===0) return;
+
+  var canvas=document.getElementById('canvas');
+  var section=document.createElement('div');
+  section.id='friendsSection';
+  section.className='friends-section';
+
+  var header=document.createElement('div');
+  header.className='friends-header';
+  header.innerHTML='\uD83D\uDC6B Friends & Mentors';
+  section.appendChild(header);
+
+  var row=document.createElement('div');
+  row.className='friends-row';
+
+  friends.forEach(function(f){
+    var g = guessGender(f.relativename);
+    var card=document.createElement('div');
+    card.className='friend-card';
+    card.onclick=function(){showPopup(Object.assign({},f,{_g:g}));};
+    var isMentor=(f._relDisplay||'').toLowerCase().indexOf('mentor')>=0;
+    card.innerHTML=
+      '<div class="friend-circle '+(g==='f'?'female':'male')+'">'+getInitials(f.relativename||'?')+'</div>'+
+      '<div class="friend-name">'+(f.relativename||'?')+'</div>'+
+      '<div class="friend-tag">'+(isMentor?'\uD83C\uDF93 Mentor':'\uD83D\uDC6B Friend')+'</div>'+
+      (f.location?'<div class="friend-location">\uD83D\uDCCD '+f.location+'</div>':'');
+    row.appendChild(card);
+  });
+
+  section.appendChild(row);
+
+  // Append below the tree canvas, inside the scrollable viewport
+  var viewport=document.getElementById('viewport');
+  viewport.appendChild(section);
 }
 
 // ============================================================
@@ -663,7 +726,17 @@ function renderTree(bonds){
   });
 }
 
-function showEmpty(){
+function showEmpty(familyOnlyEmpty){
+  if(familyOnlyEmpty){
+    var canvas=document.getElementById('canvas');
+    canvas.style.minHeight='200px';
+    var msg=document.createElement('div');
+    msg.style.cssText='padding:60px 20px;text-align:center';
+    msg.innerHTML='<div style="font-size:40px;margin-bottom:10px">\uD83C\uDF33</div>'+
+      '<p style="font-size:13px;color:#5A4A3A">No family members added yet. Tap + below to start.</p>';
+    canvas.appendChild(msg);
+    return;
+  }
   document.getElementById('viewport').innerHTML=
     '<div class="empty-state"><div class="emoji">🌳</div>'+
     '<h2>Your Family Tree is Empty</h2>'+
