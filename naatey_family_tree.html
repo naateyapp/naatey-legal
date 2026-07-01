@@ -327,24 +327,32 @@ function autoLink(bonds){
 // ============================================================
 function assignBranches(bonds){
   // First pass: assign branch to root-level relations (grandparents, direct parents)
-  var PATERNAL_RELS = ['dada','dadi','grand father (dada)','grand mother (dadi)',
-    'tau','tai','chacha','chachi','bua','fufa',
-    'father (papa)','papa','father','mother (ma)','ma','mother','maa','mummy'];
-  // Note: Papa & Ma are paternal side in layout (they appear under Dada)
+  // Check MATERNAL first (more specific), then PATERNAL, then SPOUSE
+  // This prevents Mama/Mami/Mausi/Mausa from being caught by paternal checks
   var MATERNAL_RELS = ['nana','nani','grand father (nana)','grand mother (nani)',
-    'mama','mami','mausi','mausa'];
+    "mother's brother",'mama','mami',"mother's sister",'mausi','mausa'];
+  var PATERNAL_RELS = ['dada','dadi','grand father (dada)','grand mother (dadi)',
+    "father's elder brother",'tau','tai',
+    "father's younger brother",'chacha','chachi',
+    "father's sister",'bua','fufa',
+    'father (papa)','papa'];
   var SPOUSE_RELS   = ['sasur','saas','jeth','jethani','dewar','devrani',
     'nanand','nandoi','saali','saala','sadhu','behnoi',
-    'husband','pati','wife','patni','spouse'];
+    'husband (pati)','wife (patni)','pati','patni','spouse'];
+  // Papa/Ma/Father/Mother go under 'self' so they sit between paternal & maternal
+  var SELF_PARENT_RELS = ['father (papa)','mother (ma)','papa','ma','father','mother','maa','mummy'];
 
   bonds.forEach(function(b){
     if(b._isYou){ b._branch='self'; return; }
     var r=(b._relDisplay||'').toLowerCase().trim();
-    var isPat = PATERNAL_RELS.some(function(k){ return r.indexOf(k)>=0; });
-    var isMat = MATERNAL_RELS.some(function(k){ return r.indexOf(k)>=0; });
-    var isSp  = SPOUSE_RELS.some(function(k){ return r.indexOf(k)>=0; });
-    if(isPat) b._branch='paternal';
+    // Check in priority order: self-parents, maternal, paternal, spouse
+    var isSelfParent = SELF_PARENT_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
+    var isMat = MATERNAL_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
+    var isPat = PATERNAL_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
+    var isSp  = SPOUSE_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
+    if(isSelfParent) b._branch='self';
     else if(isMat) b._branch='maternal';
+    else if(isPat) b._branch='paternal';
     else if(isSp) b._branch='spouse';
     else b._branch='self';
   });
@@ -381,7 +389,7 @@ var GEN_LABELS=[
   {gen:4,emoji:'🧒',title:'Grandchildren'}
 ];
 
-var LEVEL_H=160,NODE_W=110,START_Y=40,BRANCH_GAP=24;
+var LEVEL_H=160,NODE_W=110,START_Y=40,BRANCH_GAP=50;
 
 function getInitials(n){
   if(!n)return'?';
@@ -499,27 +507,40 @@ function renderTree(bonds){
   var allNodes=[];
   var maxX=0;
 
-  // Sort couples within a group
+  // Sort couples within a group — keeps Beta+Bahu together, Beti+Damaad together
+  // Also sorts: male first then female spouse beside them
   function sortCouples(arr){
     var ordered=[];
     var placed=new Set();
+    // First pass: place males with their spouses
     arr.forEach(function(m,i){
       if(placed.has(i))return;
+      if(m._g==='f'&&!m._isYou)return; // skip females first pass
       ordered.push(m);placed.add(i);
+      // Find spouse by marriedTo name
       if(m.marriedTo&&m.marriedTo.trim()){
         var sn=m.marriedTo.trim().toLowerCase();
         for(var j=0;j<arr.length;j++){
           if(placed.has(j))continue;
-          if((arr[j].relativename||'').trim().toLowerCase()===sn){ordered.push(arr[j]);placed.add(j);break;}
+          if((arr[j].relativename||'').trim().toLowerCase()===sn){
+            ordered.push(arr[j]);placed.add(j);break;
+          }
         }
       }
+      // Find spouse by reverse marriedTo
       if(!m._isYou){
         var myN=(m.relativename||'').trim().toLowerCase();
         for(var k=0;k<arr.length;k++){
           if(placed.has(k))continue;
-          if(arr[k].marriedTo&&arr[k].marriedTo.trim().toLowerCase()===myN){ordered.push(arr[k]);placed.add(k);break;}
+          if(arr[k].marriedTo&&arr[k].marriedTo.trim().toLowerCase()===myN){
+            ordered.push(arr[k]);placed.add(k);break;
+          }
         }
       }
+    });
+    // Second pass: any remaining unplaced (females without male counterpart)
+    arr.forEach(function(m,i){
+      if(!placed.has(i)){ordered.push(m);placed.add(i);}
     });
     return ordered;
   }
