@@ -114,10 +114,14 @@ var db=firebase.firestore();
 function classify(rel){
   if(!rel)return{gen:2,g:'u'};
   var r=rel.toLowerCase().trim();
-  if(r==='dada'||r.indexOf('grand father (dada)')>=0||r.indexOf('grandfather (dada)')>=0)return{gen:0,g:'m'};
-  if(r==='dadi'||r.indexOf('grand mother (dadi)')>=0||r.indexOf('grandmother (dadi)')>=0)return{gen:0,g:'f'};
-  if(r==='nana'||r.indexOf('grand father (nana)')>=0||r.indexOf('grandfather (nana)')>=0)return{gen:0,g:'m'};
-  if(r==='nani'||r.indexOf('grand mother (nani)')>=0||r.indexOf('grandmother (nani)')>=0)return{gen:0,g:'f'};
+  // Remove brackets content for simpler matching e.g. "Grand father (Dada)" -> "grand father"
+  var rclean=r.replace(/\s*\([^)]*\)/g,'').trim();
+  
+  // Gen 0: Grandparents - check both full and clean versions
+  if(r==='dada'||rclean==='grand father'&&r.indexOf('dada')>=0||r.indexOf('grand father (dada)')>=0||r.indexOf('grandfather (dada)')>=0)return{gen:0,g:'m'};
+  if(r==='dadi'||rclean==='grand mother'&&r.indexOf('dadi')>=0||r.indexOf('grand mother (dadi)')>=0||r.indexOf('grandmother (dadi)')>=0)return{gen:0,g:'f'};
+  if(r==='nana'||rclean==='grand father'&&r.indexOf('nana')>=0||r.indexOf('grand father (nana)')>=0||r.indexOf('grandfather (nana)')>=0)return{gen:0,g:'m'};
+  if(r==='nani'||rclean==='grand mother'&&r.indexOf('nani')>=0||r.indexOf('grand mother (nani)')>=0||r.indexOf('grandmother (nani)')>=0)return{gen:0,g:'f'};
   if(r==='grandfather'||r==='grandpa')return{gen:0,g:'m'};
   if(r==='grandmother'||r==='grandma')return{gen:0,g:'f'};
   if(r.indexOf('grand')>=0&&(r.indexOf('father')>=0||r.indexOf('pa')>=0)&&r.indexOf('son')<0&&r.indexOf('daughter')<0)return{gen:0,g:'m'};
@@ -413,7 +417,7 @@ async function init(){
   var familyBonds=[];
   var friendBonds=[];
   bonds.forEach(function(b){
-    var relField=b.testRelation||b.relationship||'';
+    var relField=b.relationship||b.testRelation||'';
     var c=classify(relField);
     b._gen=c.gen;
     b._g=c.g==='u'?guessGender(b.relativename):c.g;
