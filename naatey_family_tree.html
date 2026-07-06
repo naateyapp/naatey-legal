@@ -419,6 +419,7 @@ async function init(){
   bonds.forEach(function(b){
     var relField=b.relationship||b.testRelation||'';
     var c=classify(relField);
+    console.log('Bond:', b.relativename, '| rel:', relField, '| gen:', c.gen, '| gender:', c.g);
     b._gen=c.gen;
     b._g=c.g==='u'?guessGender(b.relativename):c.g;
     b._relDisplay=relField;
