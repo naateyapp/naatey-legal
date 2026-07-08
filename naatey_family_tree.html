@@ -213,12 +213,12 @@ function classify(rel){
   if(r.indexOf('grand')>=0&&r.indexOf('son')>=0)return{gen:4,g:'m'};
   if(r.indexOf('grand')>=0&&r.indexOf('daughter')>=0)return{gen:4,g:'f'};
 
-  // ============ FRIENDS/MENTORS - EXCLUDED ============
+  // ============ FRIENDS/MENTORS - separate section below tree ============
   if(r.indexOf('friend')>=0||r.indexOf('mentor')>=0)return{gen:99,g:'u'};
-  
-  // ============ OTHER - default to siblings row ============
-  if(r==='other')return{gen:2,g:'u'};
-  
+
+  // ============ OTHER - own separate section below tree, not the siblings row ============
+  if(r==='other')return{gen:98,g:'u'};
+
   // Final fallback - log unmatched for debugging
   console.warn('UNMATCHED relationship:', rel, '-> defaulting to gen 2');
   return{gen:2,g:'u'};
@@ -454,6 +454,7 @@ async function init(){
   }catch(e){console.error('Firestore error:',e)}
 
   var familyBonds=[];
+  var otherBonds=[];
   var friendBonds=[];
   bonds.forEach(function(b){
     var relField=b.relationship||b.testRelation||'';
@@ -462,11 +463,12 @@ async function init(){
     b._gen=c.gen;
     b._g=c.g==='u'?guessGender(b.relativename):c.g;
     b._relDisplay=relField;
-    if(c.gen<99) familyBonds.push(b);
-    else friendBonds.push(b); // Friends & Mentors go to separate section
+    if(c.gen===99) friendBonds.push(b);        // Friends & Mentors — separate section
+    else if(c.gen===98) otherBonds.push(b);    // "Other" — its own separate section, not the siblings row
+    else familyBonds.push(b);                  // Gen 0-4 — the generational tree
   });
 
-  if(familyBonds.length===0 && friendBonds.length===0){showEmpty();return;}
+  if(familyBonds.length===0 && otherBonds.length===0 && friendBonds.length===0){showEmpty();return;}
 
   if(familyBonds.length>0){
     // Insert YOU node
@@ -481,11 +483,54 @@ async function init(){
 
     renderTree(familyBonds);
   } else {
-    showEmpty(true); // show empty family state but still render friends below
+    showEmpty(true); // show empty family state but still render Other/Friends below
   }
 
+  renderOthers(otherBonds);
   renderFriends(friendBonds);
   document.getElementById('loader').classList.add('hidden');
+}
+
+// ============================================================
+// RENDER "OTHER" RELATIONS — separate section below the tree,
+// same treatment as Friends & Mentors, so an unclassified "Other"
+// relation no longer sits awkwardly in the siblings row.
+// ============================================================
+function renderOthers(others){
+  var existing=document.getElementById('othersSection');
+  if(existing) existing.remove();
+
+  if(!others || others.length===0) return;
+
+  var section=document.createElement('div');
+  section.id='othersSection';
+  section.className='friends-section';
+
+  var header=document.createElement('div');
+  header.className='friends-header';
+  header.innerHTML='\uD83D\uDC65 Other Relations';
+  section.appendChild(header);
+
+  var row=document.createElement('div');
+  row.className='friends-row';
+
+  others.forEach(function(f){
+    var g=guessGender(f.relativename);
+    var card=document.createElement('div');
+    card.className='friend-card';
+    card.onclick=function(){showPopup(Object.assign({},f,{_g:g}));};
+    card.innerHTML=
+      '<div class="friend-circle '+(g==='f'?'female':'male')+'">'+getInitials(f.relativename||'?')+'</div>'+
+      '<div class="friend-name">'+(f.relativename||'?')+'</div>'+
+      '<div class="friend-tag">\uD83D\uDC65 Other</div>'+
+      (f.location?'<div class="friend-location">\uD83D\uDCCD '+f.location+'</div>':'');
+    row.appendChild(card);
+  });
+
+  section.appendChild(row);
+
+  var viewport=document.getElementById('viewport');
+  viewport.appendChild(section);
 }
 
 // ============================================================
