@@ -321,6 +321,15 @@ function autoLink(bonds){
 
     var r = (b._relDisplay||'').toLowerCase().trim();
 
+    // Grandparents (Dada/Dadi/Nana/Nani) are tree roots — they have no
+    // parent bond in this app. Skip them entirely, otherwise the bare
+    // 'father'/'mother' keyword aliases used for Rule 0/1 below would
+    // falsely substring-match "grand father (nana)" / "grand mother (dadi)"
+    // and wrongly link one grandparent to another — which, in the unit-
+    // based layout below, can even form a parent/child CYCLE and crash
+    // the page with a stack overflow.
+    if(r.indexOf('grand')>=0) return;
+
     // Try each rule
     for(var i=0;i<AUTO_PARENT_RULES.length;i++){
       var rule = AUTO_PARENT_RULES[i];
@@ -644,6 +653,25 @@ function renderTree(bonds){
     var pid=u.members[0].parentBondId||u.members[0]._autoParentId;
     u.parentUnitId=(pid&&unitOf[pid])?unitOf[pid].id:null;
   });
+
+  // Defensive cycle guard: bad/unexpected data could in theory link two
+  // units as each other's ancestor (directly, or through a longer chain).
+  // layoutUnit() below recurses through parentUnitId -> children, so any
+  // cycle would recurse forever and crash the page (stack overflow). Walk
+  // every unit's ancestor chain here and sever any link that would loop
+  // back to a unit already seen — this guarantees layoutUnit() always
+  // terminates, no matter what the underlying relationship data looks like.
+  units.forEach(function(u){
+    var seen={}; seen[u.id]=true;
+    var cur=u;
+    while(cur.parentUnitId){
+      if(seen[cur.parentUnitId]){ cur.parentUnitId=null; break; }
+      seen[cur.parentUnitId]=true;
+      cur=unitById[cur.parentUnitId];
+      if(!cur) break;
+    }
+  });
+
   var childrenOf={};
   units.forEach(function(u){
     if(u.parentUnitId){
