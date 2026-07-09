@@ -672,19 +672,35 @@ function renderTree(bonds){
     }
   });
 
+  // Only treat parentUnitId as a real LAYOUT parent (positions the unit
+  // as a descendant below) when it's genuinely a generation above. Some
+  // rules (e.g. Bhabhi modeled as a 'child' of Bhaiya, Jija of Didi) link
+  // a same-generation spouse this way purely so a connector line ties them
+  // together — but as a real layout parent, a unit with exactly one such
+  // "child" centers itself directly on top of it, causing them to overlap.
+  // Those same-gen links are dropped here; the existing marriage-connector
+  // logic (marriedTo match, or the Pati/Patni keyword fallback) is what
+  // actually pairs and positions real spouses side by side.
+  function isRealLayoutParent(u){
+    if(!u.parentUnitId) return false;
+    var parent=unitById[u.parentUnitId];
+    return !!(parent && u.gen>parent.gen);
+  }
+
   var childrenOf={};
   units.forEach(function(u){
-    if(u.parentUnitId){
+    if(isRealLayoutParent(u)){
       if(!childrenOf[u.parentUnitId])childrenOf[u.parentUnitId]=[];
       childrenOf[u.parentUnitId].push(u);
     }
   });
 
-  // Roots = units with no parent above them (grandparents, or any
-  // orphaned record). Order roots Papa's-side first, then anything
+  // Roots = units with no genuine layout parent above them (grandparents,
+  // same-generation spouse-links like Bhabhi/Jija that got excluded above,
+  // or any orphaned record). Order roots Papa's-side first, then anything
   // unbranched, then Mama's-side last, so the two ancestries fan out
   // as clearly separated left/right branches instead of one long row.
-  var roots=units.filter(function(u){return !u.parentUnitId;});
+  var roots=units.filter(function(u){return !isRealLayoutParent(u);});
   var branchRank={paternal:0,self:1,spouse:1,maternal:2};
   roots.sort(function(a,b){
     var ra=branchRank[a.branch]!=null?branchRank[a.branch]:1;
@@ -722,15 +738,37 @@ function renderTree(bonds){
   units.forEach(function(u){
     var y=START_Y+u.gen*LEVEL_H;
     if(u.members.length>1){
-      var leftX=u._x-(NODE_W+UNIT_GAP)/2;
-      var rightX=u._x+(NODE_W+UNIT_GAP)/2-NODE_W;
+      // Total couple width = NODE_W*2+UNIT_GAP (matches unitWidth()), centered on u._x
+      var leftX=u._x-NODE_W-UNIT_GAP/2;
+      var rightX=u._x+UNIT_GAP/2;
       u.members[0]._x=leftX; u.members[0]._y=y;
       u.members[1]._x=rightX; u.members[1]._y=y;
     }else{
       u.members[0]._x=u._x-NODE_W/2; u.members[0]._y=y;
     }
-    u.members.forEach(function(m){ allNodes.push(m); if(m._x+NODE_W>maxX)maxX=m._x+NODE_W; });
+    u.members.forEach(function(m){ allNodes.push(m); });
   });
+
+  // Safety pass: the recursive centering above can occasionally place two
+  // nodes from unrelated branches closer than a node's actual width (e.g. a
+  // parent centered over a single child can shift closer to a neighboring
+  // branch than intended). Rather than trying to perfectly model every
+  // possible tree shape, guarantee the result visually here: within each
+  // row (same generation), sort left-to-right and push any node that's
+  // closer than a safe minimum distance to its left neighbor further
+  // right — carrying that shift forward so order is preserved and no new
+  // overlap is introduced later in the same row.
+  var MIN_NODE_GAP=96; // node div is 90px wide; keeps a small visual margin
+  var byY={};
+  allNodes.forEach(function(n){ (byY[n._y]=byY[n._y]||[]).push(n); });
+  Object.keys(byY).forEach(function(y){
+    var row=byY[y].sort(function(a,b){return a._x-b._x;});
+    for(var i=1;i<row.length;i++){
+      var minX=row[i-1]._x+MIN_NODE_GAP;
+      if(row[i]._x<minX) row[i]._x=minX;
+    }
+  });
+  allNodes.forEach(function(m){ if(m._x+NODE_W>maxX)maxX=m._x+NODE_W; });
 
   var maxGen=0; allNodes.forEach(function(n){ if(n._gen>maxGen)maxGen=n._gen; });
   var maxY=START_Y+maxGen*LEVEL_H+140;
