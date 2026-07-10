@@ -14,6 +14,7 @@
   .tree-canvas{position:relative;min-width:800px;min-height:600px;padding:30px 20px 80px}
   .connectors{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
   .conn-pc{stroke:#8B7355;stroke-width:2;fill:none}
+  .conn-pc-secondary{stroke:#B7A692;stroke-width:1.5;stroke-dasharray:4,3;fill:none}
   .conn-mar{stroke:#E91E63;stroke-width:2;stroke-dasharray:6,4;fill:none}
   .node{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;z-index:10;width:90px;transition:transform .15s}
   .node:active{transform:scale(.93)}
@@ -191,6 +192,23 @@ function classify(rel){
   if(r.indexOf('brother')>=0&&r.indexOf('grand')<0&&r.indexOf("'s")<0&&r.indexOf('-in-law')<0)return{gen:2,g:'m'};
   if(r.indexOf('sister')>=0&&r.indexOf('grand')<0&&r.indexOf("'s")<0&&r.indexOf('-in-law')<0)return{gen:2,g:'f'};
 
+  // ============ GEN 4: GRANDCHILDREN ============
+  // Checked BEFORE Gen 3 deliberately: "Daughter's Son (Nati)" contains the
+  // substring 'son', and "Daughter's Daughter (Natin)" contains 'daughter'
+  // — so the generic Gen 3 bare 'son'/'daughter' checks below would
+  // otherwise wrongly catch them first, misclassifying grandchildren as
+  // children and breaking both their generation row and their parent link
+  // to the actual daughter (since a same-generation link gets excluded by
+  // the real-layout-parent check elsewhere).
+  if(r.indexOf('pota')>=0)return{gen:4,g:'m'};
+  if(r.indexOf('poti')>=0)return{gen:4,g:'f'};
+  if(r.indexOf('natin')>=0)return{gen:4,g:'f'};
+  if(r.indexOf('nati')>=0)return{gen:4,g:'m'};
+  if(r.indexOf('grandson')>=0)return{gen:4,g:'m'};
+  if(r.indexOf('granddaughter')>=0)return{gen:4,g:'f'};
+  if(r.indexOf('grand')>=0&&r.indexOf('son')>=0)return{gen:4,g:'m'};
+  if(r.indexOf('grand')>=0&&r.indexOf('daughter')>=0)return{gen:4,g:'f'};
+
   // ============ GEN 3: CHILDREN ============
   if(r.indexOf('beta')>=0&&r.indexOf('grand')<0)return{gen:3,g:'m'};
   if(r.indexOf('beti')>=0&&r.indexOf('grand')<0)return{gen:3,g:'f'};
@@ -202,16 +220,6 @@ function classify(rel){
   if(r.indexOf('damaad')>=0)return{gen:3,g:'m'};
   if(r.indexOf('daughter-in-law')>=0||r.indexOf('daughter in law')>=0)return{gen:3,g:'f'};
   if(r.indexOf('son-in-law')>=0||r.indexOf('son in law')>=0)return{gen:3,g:'m'};
-
-  // ============ GEN 4: GRANDCHILDREN ============
-  if(r.indexOf('pota')>=0)return{gen:4,g:'m'};
-  if(r.indexOf('poti')>=0)return{gen:4,g:'f'};
-  if(r.indexOf('natin')>=0)return{gen:4,g:'f'};
-  if(r.indexOf('nati')>=0)return{gen:4,g:'m'};
-  if(r.indexOf('grandson')>=0)return{gen:4,g:'m'};
-  if(r.indexOf('granddaughter')>=0)return{gen:4,g:'f'};
-  if(r.indexOf('grand')>=0&&r.indexOf('son')>=0)return{gen:4,g:'m'};
-  if(r.indexOf('grand')>=0&&r.indexOf('daughter')>=0)return{gen:4,g:'f'};
 
   // ============ FRIENDS/MENTORS - separate section below tree ============
   if(r.indexOf('friend')>=0||r.indexOf('mentor')>=0)return{gen:99,g:'u'};
@@ -242,7 +250,7 @@ function guessGender(name){
 var AUTO_PARENT_RULES = [
   // Gen 1 → Gen 0 parents
   { child: ['father (papa)','papa','father'],          parents: ['grand father (dada)','dada'] },
-  { child: ['mother (ma)','ma','mother','maa','mummy'],parents: ['grand father (nana)','nana'] },
+  { child: ['mother (ma)','mother','mummy'],parents: ['grand father (nana)','nana'] },
   { child: ['father\'s elder brother (tau)','tau'],    parents: ['grand father (dada)','dada'] },
   { child: ['father\'s elder brother\'s wife (tai)','tai'], parents: ['grand father (dada)','dada'] },
   { child: ['father\'s younger brother (chacha)','chacha'], parents: ['grand father (dada)','dada'] },
@@ -264,18 +272,23 @@ var AUTO_PARENT_RULES = [
   { child: ['elder sister\'s husband (jija)','jija'],
             parents: ['elder sister (didi)','didi'] },
 
+  // Gen 4 → Gen 3 — placed BEFORE the Gen 3 rule below deliberately:
+  // "Grandson (Pota)" contains the bare substring 'son', and "Daughter's
+  // Son (Nati)" / "Daughter's Daughter (Natin)" contain 'son'/'daughter' —
+  // so the more generic Gen 3 rule's bare keywords would otherwise match
+  // first and wrongly resolve these grandchildren straight to You instead
+  // of to their actual parent (Beta or the daughter).
+  { child: ['grandson (pota)','pota','granddaughter (poti)','poti'],
+            parents: ['son (beta)','beta','son'] },
+  { child: ["daughter's son (nati)",'nati',"daughter's daughter (natin)",'natin'],
+            parents: ['daughter (beti)','beti','daughter'] },
+
   // Gen 3 → Gen 2 (You or sibling)
   { child: ['son (beta)','beta','son','daughter (beti)','beti','daughter'],
             parents: ['__you__'] },  // special token = You node
   { child: ['daughter-in-law (bahu)','bahu'],
             parents: ['son (beta)','beta','son'] },
   { child: ['son-in-law (damaad)','damaad'],
-            parents: ['daughter (beti)','beti','daughter'] },
-
-  // Gen 4 → Gen 3
-  { child: ['grandson (pota)','pota','granddaughter (poti)','poti'],
-            parents: ['son (beta)','beta','son'] },
-  { child: ["daughter's son (nati)",'nati',"daughter's daughter (natin)",'natin'],
             parents: ['daughter (beti)','beti','daughter'] },
 ];
 
@@ -297,13 +310,38 @@ function autoLink(bonds){
     relIndex[r].push(b);
   });
 
-  // Helper: find first bond matching any of the given keywords
+  // Build lookup: person's own name → their bond id, for explicit
+  // Father's Name / Mother's Name resolution (see below).
+  var nameIndex = {};
+  bonds.forEach(function(b){
+    if(b._isYou){ nameIndex['you']=YOU_ID; return; }
+    if(b.relativename) nameIndex[b.relativename.trim().toLowerCase()] = b.id;
+  });
+  function findBondIdByName(name){
+    if(!name || !name.trim()) return null;
+    return nameIndex[name.trim().toLowerCase()] || null;
+  }
+
+  // Helper: find first bond matching any of the given keywords.
+  // Two tiers: exact match (always safe), then a fuzzy substring fallback
+  // for when no exact match exists. The fuzzy tier is dangerous for a
+  // small set of common short words that appear as substrings inside many
+  // OTHER unrelated relationship phrases — e.g. bare 'father' also matches
+  // inside "grand father (nana)", bare 'son' also matches inside
+  // "grandson" and "daughter's son". If a real Papa/Beta/etc. bond simply
+  // doesn't exist yet, fuzzy-matching one of these words can silently
+  // attach to a completely wrong person (this is exactly what caused You
+  // to be wrongly linked under Nana when no Papa bond existed). These
+  // words are excluded from the fuzzy tier entirely — safe for exact
+  // matching, never used to guess.
+  var UNSAFE_FOR_FUZZY = {father:1, mother:1, son:1, daughter:1, ma:1, maa:1, mummy:1};
   function findParent(keywords){
     for(var i=0;i<keywords.length;i++){
       var kw = keywords[i].toLowerCase();
       if(kw === '__you__') return {id: YOU_ID, _isYou: true};
       // Exact match first
       if(relIndex[kw] && relIndex[kw].length>0) return relIndex[kw][0];
+      if(UNSAFE_FOR_FUZZY[kw]) continue; // never fuzzy-match these — exact only
       // Partial match fallback
       var keys = Object.keys(relIndex);
       for(var j=0;j<keys.length;j++){
@@ -319,16 +357,46 @@ function autoLink(bonds){
     // If parentBondId already explicitly set in Firestore, respect it
     if(b.parentBondId) return;
 
+    // ============================================================
+    // EXPLICIT PARENT NAMES — the robust, long-term resolution.
+    // Relationship-type keyword matching (below) is inherently
+    // ambiguous once more than one bond shares the same type — e.g.
+    // with two "Daughter (Beti)" entries, a "Son-in-Law (Damaad)"
+    // bond's rule-based lookup has no way to know WHICH daughter is
+    // actually his wife, and can silently attach to the wrong one.
+    // If this bond has an explicit fatherName/motherName (see the
+    // AddRelative form), use that instead — it's exact, never
+    // ambiguous, and takes priority. Only bonds where these fields
+    // are left blank fall through to the keyword-based guess below,
+    // so all existing data keeps working exactly as before.
+    var explicitFatherId = findBondIdByName(b.fatherName);
+    var explicitMotherId = findBondIdByName(b.motherName);
+    if(explicitFatherId || explicitMotherId){
+      b._autoParentId = explicitFatherId || explicitMotherId;
+      // If BOTH parents are explicitly named and identifiable, keep
+      // the other one too — used to draw a secondary connector line
+      // to them as well (e.g. if father & mother aren't merged into
+      // one couple-unit for some reason), same idea as the existing
+      // Papa/Ma-style secondary lineage line.
+      var other = explicitFatherId ? explicitMotherId : null;
+      if(other && other!==b._autoParentId) b._secondaryParentId = other;
+      return;
+    }
+
     var r = (b._relDisplay||'').toLowerCase().trim();
 
-    // Grandparents (Dada/Dadi/Nana/Nani) are tree roots — they have no
-    // parent bond in this app. Skip them entirely, otherwise the bare
+    // Grandparents (Dada/Dadi/Nana/Nani, gen 0) are tree roots — they have
+    // no parent bond in this app. Skip them entirely, otherwise the bare
     // 'father'/'mother' keyword aliases used for Rule 0/1 below would
     // falsely substring-match "grand father (nana)" / "grand mother (dadi)"
     // and wrongly link one grandparent to another — which, in the unit-
     // based layout below, can even form a parent/child CYCLE and crash
     // the page with a stack overflow.
-    if(r.indexOf('grand')>=0) return;
+    // NOTE: this checks the generation NUMBER, not the word "grand" in the
+    // relationship string — a plain string check would also wrongly catch
+    // grandCHILDREN ("Grandson (Pota)" contains "grand" too), leaving them
+    // with no parent link at all.
+    if(b._gen===0) return;
 
     // Try each rule
     for(var i=0;i<AUTO_PARENT_RULES.length;i++){
@@ -650,8 +718,23 @@ function renderTree(bonds){
   // ============================================================
   var unitById={}; units.forEach(function(u){unitById[u.id]=u;});
   units.forEach(function(u){
-    var pid=u.members[0].parentBondId||u.members[0]._autoParentId;
-    u.parentUnitId=(pid&&unitOf[pid])?unitOf[pid].id:null;
+    // A couple can have TWO different resolved parent links (e.g. Didi's
+    // own link to Papa, and her husband Jija's rule-based link to "Didi"
+    // herself — modeled that way purely so a connector ties him to her).
+    // Blindly using only members[0]'s link is wrong: if he happens to be
+    // primary, his same-generation/self-referencing link would silently
+    // override her genuinely valid one, leaving the couple with no real
+    // parent at all. Check both members and use whichever link actually
+    // points to a different unit at a strictly earlier generation.
+    function validParentUnitId(member){
+      var pid=member.parentBondId||member._autoParentId;
+      if(!pid)return null;
+      var ref=unitOf[pid];
+      if(!ref||ref.id===u.id)return null;   // no link, or a self-reference
+      if(!(ref.gen<u.gen))return null;      // must be a genuine generation above
+      return ref.id;
+    }
+    u.parentUnitId = validParentUnitId(u.members[0]) || (u.members[1]?validParentUnitId(u.members[1]):null);
   });
 
   // Defensive cycle guard: bad/unexpected data could in theory link two
@@ -693,6 +776,19 @@ function renderTree(bonds){
       if(!childrenOf[u.parentUnitId])childrenOf[u.parentUnitId]=[];
       childrenOf[u.parentUnitId].push(u);
     }
+  });
+
+  // Cluster simple siblings (no descendants of their own) together right
+  // next to their parent, and push any sibling who themselves has a wide
+  // subtree to the end. Without this, a sibling processed early in the
+  // recursion (e.g. "You", who may have several children) can consume a
+  // large stretch of horizontal space, shoving every later-processed
+  // sibling far away and making them look stranded on a wide canvas.
+  Object.keys(childrenOf).forEach(function(pid){
+    childrenOf[pid].sort(function(a,b){
+      var aLeaf=childrenOf[a.id]?1:0, bLeaf=childrenOf[b.id]?1:0;
+      return aLeaf-bLeaf;
+    });
   });
 
   // Roots = units with no genuine layout parent above them (grandparents,
@@ -768,6 +864,18 @@ function renderTree(bonds){
       if(row[i]._x<minX) row[i]._x=minX;
     }
   });
+
+  // Normalize: if a couple happens to be the very first unit laid out,
+  // centering it on a small starting x can push its left member to a
+  // negative x (off-canvas, inaccessible). Shift every node right by
+  // whatever amount is needed so the leftmost node sits at a safe margin.
+  var minNodeX=0;
+  allNodes.forEach(function(n){ if(n._x<minNodeX) minNodeX=n._x; });
+  if(minNodeX<20){
+    var shift=20-minNodeX;
+    allNodes.forEach(function(n){ n._x+=shift; });
+  }
+
   allNodes.forEach(function(m){ if(m._x+NODE_W>maxX)maxX=m._x+NODE_W; });
 
   var maxGen=0; allNodes.forEach(function(n){ if(n._gen>maxGen)maxGen=n._gen; });
@@ -800,7 +908,7 @@ function renderTree(bonds){
   // PARENT-CHILD CONNECTORS — one per unit with a resolved parent
   // ============================================================
   units.forEach(function(u){
-    if(!u.parentUnitId)return;
+    if(!isRealLayoutParent(u))return;
     var parentUnit=unitById[u.parentUnitId];
     if(!parentUnit)return;
     var pAnchorX=parentUnit.members.length>1
@@ -813,6 +921,65 @@ function renderTree(bonds){
     var cy=u.members[0]._y-4;
     var my=py+(cy-py)*0.45;
     svgHtml+='<path class="conn-pc" d="M'+pAnchorX+','+py+' L'+pAnchorX+','+my+' L'+cAnchorX+','+my+' L'+cAnchorX+','+cy+'"/>';
+  });
+
+  // ============================================================
+  // SECONDARY PARENT CONNECTOR — when a couple is one unit (e.g. Papa +
+  // Ma), only the PRIMARY member's own lineage (Papa -> Dada) is used to
+  // position and connect the unit. The other spouse's own parents (Ma's
+  // own link to Nana/Nani) would otherwise never be shown at all. Draw a
+  // distinctly-styled second connector from that side's real ancestor
+  // down to the couple, so Ma's own lineage to Nana/Nani is still visible
+  // even though her position is anchored next to Papa, not under Nana.
+  // ============================================================
+  units.forEach(function(u){
+    if(u.members.length<2)return;
+    var secondary=u.members[1];
+    var pid=secondary.parentBondId||secondary._autoParentId;
+    if(!pid||pid==='__you__')return;
+    var secParentUnitRef=unitOf[pid];
+    if(!secParentUnitRef)return;
+    var parentUnit=unitById[secParentUnitRef.id];
+    if(!parentUnit)return;
+    if(!(u.gen>parentUnit.gen))return;      // must be a genuine generation-up link
+    if(parentUnit.id===u.parentUnitId)return; // same as primary's own parent already drawn above
+    var pAnchorX=parentUnit.members.length>1
+      ?(parentUnit.members[0]._x+parentUnit.members[1]._x)/2+NODE_W/2
+      :parentUnit.members[0]._x+NODE_W/2;
+    var py=parentUnit.members[0]._y+60;
+    var cAnchorX=secondary._x+NODE_W/2;
+    var cy=secondary._y-4;
+    var my=py+(cy-py)*0.45;
+    svgHtml+='<path class="conn-pc conn-pc-secondary" d="M'+pAnchorX+','+py+' L'+pAnchorX+','+my+' L'+cAnchorX+','+my+' L'+cAnchorX+','+cy+'"/>';
+  });
+
+  // ============================================================
+  // SECONDARY PARENT CONNECTOR (explicit) — when BOTH Father's Name and
+  // Mother's Name were explicitly provided on a bond and both resolved to
+  // real people, but they aren't merged into one couple-unit (e.g. the
+  // two parents aren't linked via marriedTo, or one is a step-parent).
+  // Draws a second connector to whichever parent wasn't used as the
+  // primary layout link, so both named parents are visibly connected.
+  // ============================================================
+  units.forEach(function(u){
+    u.members.forEach(function(m){
+      var pid=m._secondaryParentId;
+      if(!pid||pid==='__you__')return;
+      var secParentUnitRef=unitOf[pid];
+      if(!secParentUnitRef)return;
+      var parentUnit=unitById[secParentUnitRef.id];
+      if(!parentUnit)return;
+      if(!(u.gen>parentUnit.gen))return;
+      if(parentUnit.id===u.parentUnitId)return;
+      var pAnchorX2=parentUnit.members.length>1
+        ?(parentUnit.members[0]._x+parentUnit.members[1]._x)/2+NODE_W/2
+        :parentUnit.members[0]._x+NODE_W/2;
+      var py2=parentUnit.members[0]._y+60;
+      var cAnchorX2=m._x+NODE_W/2;
+      var cy2=m._y-4;
+      var my2=py2+(cy2-py2)*0.45;
+      svgHtml+='<path class="conn-pc conn-pc-secondary" d="M'+pAnchorX2+','+py2+' L'+pAnchorX2+','+my2+' L'+cAnchorX2+','+my2+' L'+cAnchorX2+','+cy2+'"/>';
+    });
   });
 
   svg.innerHTML=svgHtml;
