@@ -440,19 +440,24 @@ function assignBranches(bonds){
   var PATERNAL_RELS = ['dada','dadi','grand father (dada)','grand mother (dadi)',
     "father's elder brother",'tau','tai',
     "father's younger brother",'chacha','chachi',
-    "father's sister",'bua','fufa',
-    'father (papa)','papa'];
+    "father's sister",'bua','fufa'];
   var SPOUSE_RELS   = ['sasur','saas','jeth','jethani','dewar','devrani',
-    'nanand','nandoi','saali','saala','sadhu','behnoi',
-    'husband (pati)','wife (patni)','pati','patni','spouse'];
-  // Papa/Ma/Father/Mother go under 'self' so they sit between paternal & maternal
-  var SELF_PARENT_RELS = ['father (papa)','mother (ma)','papa','ma','father','mother','maa','mummy'];
+    'nanand','nandoi','saali','saala','sadhu','behnoi'];
+    // pati/patni/husband/wife intentionally excluded — they belong in 'self',
+    // right next to You, not in the in-law zone.
+
+  // Papa/Ma go under 'self' — but bare 'father'/'mother' MUST be checked via
+  // EXACT match only, never substring. A substring check would also match
+  // inside "grand father (nana)" / "grand mother (dadi)", wrongly classifying
+  // grandparents as 'self' instead of paternal/maternal — which breaks the
+  // left/right branch ordering (root sort relies on correct classification)
+  // and causes connector lines to cross the wrong side of the tree.
+  var SELF_PARENT_EXACT = ['father (papa)','papa','father','mother (ma)','ma','mother','maa','mummy'];
 
   bonds.forEach(function(b){
     if(b._isYou){ b._branch='self'; return; }
     var r=(b._relDisplay||'').toLowerCase().trim();
-    // Check in priority order: self-parents, maternal, paternal, spouse
-    var isSelfParent = SELF_PARENT_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
+    var isSelfParent = SELF_PARENT_EXACT.indexOf(r)>=0; // exact match only
     var isMat = MATERNAL_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
     var isPat = PATERNAL_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
     var isSp  = SPOUSE_RELS.some(function(k){ return r===k||r.indexOf(k)>=0; });
