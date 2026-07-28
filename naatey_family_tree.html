@@ -790,7 +790,26 @@ function renderTree(bonds){
   // large stretch of horizontal space, shoving every later-processed
   // sibling far away and making them look stranded on a wide canvas.
   Object.keys(childrenOf).forEach(function(pid){
+    // Determine which side is "outer" (away from the opposite grandparent
+    // group) for this parent's branch, so true siblings (Tau/Chacha on the
+    // paternal side, Mama/Mami/Mausi on the maternal side) get pushed to
+    // that outer edge, while the 'self' unit — the one that continues the
+    // line toward You, and needs its secondary connector to reach across
+    // to the opposite grandparent — sits on the INNER edge, closest to
+    // that opposite side. This keeps the middle of the tree (between the
+    // two grandparent groups) clear, so the long secondary connector no
+    // longer has to cross through a sibling's own connector on the way.
+    var parentUnit=unitById[pid];
+    var parentBranch=parentUnit?parentUnit.branch:null;
+    function centerScore(u){
+      var isSelf=(u.branch==='self');
+      if(parentBranch==='paternal') return isSelf?1:0; // self last (inner/right)
+      if(parentBranch==='maternal') return isSelf?0:1; // self first (inner/left)
+      return 0;
+    }
     childrenOf[pid].sort(function(a,b){
+      var cs=centerScore(a)-centerScore(b);
+      if(cs!==0) return cs;
       var aLeaf=childrenOf[a.id]?1:0, bLeaf=childrenOf[b.id]?1:0;
       return aLeaf-bLeaf;
     });
@@ -1080,7 +1099,6 @@ function showPopup(p){
   var rows='';
   if(p.profession)rows+='<div class="popup-row"><span class="popup-icon">\uD83D\uDCBC</span>'+p.profession+'</div>';
   if(p.location)rows+='<div class="popup-row"><span class="popup-icon">\uD83D\uDCCD</span>'+p.location+'</div>';
-  if(p.relativePhone)rows+='<div class="popup-row"><span class="popup-icon">\uD83D\uDCDE</span>'+p.relativePhone+'</div>';
   if(p.marriedTo)rows+='<div class="popup-row"><span class="popup-icon">\u2665</span>Married to: '+p.marriedTo+'</div>';
   if(!rows)rows='<div class="popup-row" style="justify-content:center;color:#bbb">No details added yet</div>';
   document.getElementById('pRows').innerHTML=rows;
