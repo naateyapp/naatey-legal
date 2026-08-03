@@ -465,7 +465,14 @@ function assignBranches(bonds){
     else if(isMat) b._branch='maternal';
     else if(isPat) b._branch='paternal';
     else if(isSp) b._branch='spouse';
-    else b._branch='self';
+    else { b._branch='self'; return; }
+    // This bond's branch came from an EXPLICIT relationship-keyword match
+    // (not the generic fallback above) — lock it now so the propagation
+    // pass further down never overwrites it. Without this, Papa/Ma's own
+    // correct 'self' branch gets silently clobbered back to 'paternal'/
+    // 'maternal' by the propagation loop, since they're linked to Dada/
+    // Nana for LAYOUT purposes even though their true branch is 'self'.
+    b._branchLocked = true;
   });
 
   // Second pass: propagate branch from parent → children (auto-linked or manual)
