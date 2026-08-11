@@ -545,8 +545,16 @@ async function init(){
   var familyBonds=[];
   var otherBonds=[];
   var friendBonds=[];
+  var selfBond=null; // holds the user's own "Self" bond (if any), merged into the YOU node instead of rendered as a separate person
   bonds.forEach(function(b){
     var relField=b.relationship||b.testRelation||'';
+    // A "Self" bond represents the logged-in user themselves (auto-created from
+    // their profile so they can be picked as a Father/Mother elsewhere). The
+    // tree already renders a synthetic YOU node for this same person, so a
+    // "Self" bond must never become its own node — that would show up as a
+    // duplicate person next to YOU. Capture it separately and merge its real
+    // name/profession/location/marriedTo into the YOU node below instead.
+    if(relField.trim().toLowerCase()==='self'){ selfBond=b; return; }
     var c=classify(relField);
     console.log('Bond:', b.relativename, '| rel:', relField, '| gen:', c.gen, '| gender:', c.g);
     b._gen=c.gen;
@@ -560,8 +568,14 @@ async function init(){
   if(familyBonds.length===0 && otherBonds.length===0 && friendBonds.length===0){showEmpty();return;}
 
   if(familyBonds.length>0){
-    // Insert YOU node
-    var youNode={_isYou:true,id:'__you__',relativename:'You',_gen:2,_g:'m',_relDisplay:'',_branch:'self'};
+    // Insert YOU node — enriched with the Self bond's real details when available,
+    // so tapping YOU shows actual profession/location/marriedTo instead of nothing.
+    var youNode={_isYou:true,id:'__you__',
+      relativename:(selfBond&&selfBond.relativename)?selfBond.relativename:'You',
+      _gen:2,_g:'m',_relDisplay:'',_branch:'self',
+      profession:selfBond?selfBond.profession:undefined,
+      location:selfBond?selfBond.location:undefined,
+      marriedTo:selfBond?selfBond.marriedTo:undefined};
     familyBonds.unshift(youNode);
 
     // Auto-link: assign _autoParentId based on relationship rules
@@ -1098,11 +1112,13 @@ function showEmpty(familyOnlyEmpty){
 }
 
 function showPopup(p){
-  if(p._isYou)return;
+  // YOU only opens the popup if the Self bond gave us real details to show
+  // (profession/location/marriedTo); otherwise there's nothing to display.
+  if(p._isYou && !p.profession && !p.location && !p.marriedTo)return;
   document.getElementById('pAvatar').style.background=p._g==='f'?'#E91E63':'#2980B9';
   document.getElementById('pAvatar').textContent=getInitials(p.relativename||'');
   document.getElementById('pName').textContent=p.relativename||'';
-  document.getElementById('pRelation').textContent=p._relDisplay||'';
+  document.getElementById('pRelation').textContent=p._isYou?'You':(p._relDisplay||'');
   var rows='';
   if(p.profession)rows+='<div class="popup-row"><span class="popup-icon">\uD83D\uDCBC</span>'+p.profession+'</div>';
   if(p.location)rows+='<div class="popup-row"><span class="popup-icon">\uD83D\uDCCD</span>'+p.location+'</div>';
