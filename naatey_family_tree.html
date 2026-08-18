@@ -160,6 +160,11 @@ function classify(rel){
   // In-laws (spouse's parents)
   if(r.indexOf('sasur')>=0)return{gen:1,g:'m'};
   if(r.indexOf('saas')>=0||r.indexOf('sasu')>=0)return{gen:1,g:'f'};
+  // Explicit English safety net for the two generic dropdown options
+  // ("Father-in-law (Sasur)" / "Mother-in-law (Saas)") — doesn't rely on
+  // the Hindi term alone, in case wording changes later.
+  if(r.indexOf('father-in-law')>=0||r.indexOf('father in law')>=0)return{gen:1,g:'m'};
+  if(r.indexOf('mother-in-law')>=0||r.indexOf('mother in law')>=0)return{gen:1,g:'f'};
   if(r==='uncle')return{gen:1,g:'m'};
   if(r==='aunt'||r==='aunty'||r==='auntie')return{gen:1,g:'f'};
   // Father's/Mother's siblings (longer format)
@@ -189,6 +194,12 @@ function classify(rel){
   if(r.indexOf('sadhu')>=0)return{gen:2,g:'m'};
   if(r.indexOf('saala')>=0)return{gen:2,g:'m'};
   if(r.indexOf('behnoi')>=0)return{gen:2,g:'m'};
+  // Explicit English safety net for the two generic dropdown options
+  // ("Brother-in-law (Sala/Devar/Jeth)" / "Sister-in-law (Sali/Nanad)") —
+  // checked before the plain brother/sister rule below, which deliberately
+  // excludes '-in-law' so it doesn't double-match these.
+  if(r.indexOf('brother-in-law')>=0||r.indexOf('brother in law')>=0)return{gen:2,g:'m'};
+  if(r.indexOf('sister-in-law')>=0||r.indexOf('sister in law')>=0)return{gen:2,g:'f'};
   if(r.indexOf('brother')>=0&&r.indexOf('grand')<0&&r.indexOf("'s")<0&&r.indexOf('-in-law')<0)return{gen:2,g:'m'};
   if(r.indexOf('sister')>=0&&r.indexOf('grand')<0&&r.indexOf("'s")<0&&r.indexOf('-in-law')<0)return{gen:2,g:'f'};
 
@@ -220,6 +231,14 @@ function classify(rel){
   if(r.indexOf('damaad')>=0)return{gen:3,g:'m'};
   if(r.indexOf('daughter-in-law')>=0||r.indexOf('daughter in law')>=0)return{gen:3,g:'f'};
   if(r.indexOf('son-in-law')>=0||r.indexOf('son in law')>=0)return{gen:3,g:'m'};
+  // Nephews/nieces (sibling's children) — same generation row as your own
+  // children, since they're one generation below you either way.
+  if(r.indexOf('bhanja')>=0)return{gen:3,g:'m'};
+  if(r.indexOf('bhanji')>=0)return{gen:3,g:'f'};
+  if(r.indexOf('bhatija')>=0)return{gen:3,g:'m'};
+  if(r.indexOf('bhatiji')>=0)return{gen:3,g:'f'};
+  if(r.indexOf('nephew')>=0)return{gen:3,g:'m'};
+  if(r.indexOf('niece')>=0)return{gen:3,g:'f'};
 
   // ============ FRIENDS/MENTORS - separate section below tree ============
   if(r.indexOf('friend')>=0||r.indexOf('mentor')>=0)return{gen:99,g:'u'};
@@ -271,6 +290,17 @@ var AUTO_PARENT_RULES = [
             parents: ['elder brother (bhaiya)','bhaiya'] },
   { child: ['elder sister\'s husband (jija)','jija'],
             parents: ['elder sister (didi)','didi'] },
+  // Nephews/nieces → the sibling they belong to. Checked with the same
+  // priority tier as other Gen 3 rules further below; sits here so a
+  // sibling bond (already resolved above) is available to link against.
+  { child: ["sister's son (bhanja)",'bhanja'],
+            parents: ['elder sister (didi)','didi','younger sister (behen)','behen'] },
+  { child: ["sister's daughter (bhanji)",'bhanji'],
+            parents: ['elder sister (didi)','didi','younger sister (behen)','behen'] },
+  { child: ["brother's son (bhatija)",'bhatija'],
+            parents: ['elder brother (bhaiya)','bhaiya','younger brother (bhai)','bhai'] },
+  { child: ["brother's daughter (bhatiji)",'bhatiji'],
+            parents: ['elder brother (bhaiya)','bhaiya','younger brother (bhai)','bhai'] },
 
   // Gen 4 → Gen 3 — placed BEFORE the Gen 3 rule below deliberately:
   // "Grandson (Pota)" contains the bare substring 'son', and "Daughter's
@@ -442,7 +472,8 @@ function assignBranches(bonds){
     "father's younger brother",'chacha','chachi',
     "father's sister",'bua','fufa'];
   var SPOUSE_RELS   = ['sasur','saas','jeth','jethani','dewar','devrani',
-    'nanand','nandoi','saali','saala','sadhu','behnoi'];
+    'nanand','nandoi','saali','saala','sadhu','behnoi',
+    'father-in-law','mother-in-law','brother-in-law','sister-in-law'];
     // pati/patni/husband/wife intentionally excluded — they belong in 'self',
     // right next to You, not in the in-law zone.
 
